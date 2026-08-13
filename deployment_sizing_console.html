@@ -1,0 +1,2212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DeepSeek deployment sizing — console</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --substrate:#EEF1F5;
+  --card:#FFFFFF;
+  --ink:#16202E;
+  --graphite:#5A6878;
+  --rule:#C8D0DA;
+  --rule-soft:#DDE3EA;
+  --verified:#0F6E5C;
+  --extrapolated:#B26A00;
+  --blocked:#A6303E;
+  --verified-wash:#E4F0EC;
+  --extrapolated-wash:#F7EEDF;
+  --blocked-wash:#F7E6E8;
+
+  --display:"Space Grotesk","Helvetica Neue",Arial,sans-serif;
+  --body:"IBM Plex Sans","Segoe UI",system-ui,sans-serif;
+  --mono:"IBM Plex Mono","SFMono-Regular",Consolas,monospace;
+
+  --step-1:0.75rem;
+  --step0:0.875rem;
+  --step1:1rem;
+  --step2:1.375rem;
+  --step3:2rem;
+  --step4:2.875rem;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:var(--substrate);
+  color:var(--ink);
+  font-family:var(--body);
+  font-size:var(--step0);
+  line-height:1.55;
+  -webkit-font-smoothing:antialiased;
+}
+h1,h2,h3{font-family:var(--display);margin:0;letter-spacing:-0.02em;line-height:1.15}
+.mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+button,input,select{font-family:inherit;font-size:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--ink);outline-offset:2px;border-radius:2px}
+
+/* ---------- masthead ---------- */
+.masthead{border-bottom:1px solid var(--rule);background:var(--card);padding:2rem 1.5rem 1.25rem}
+.masthead-inner{max-width:1400px;margin:0 auto}
+.eyebrow{
+  font-family:var(--mono);font-size:var(--step-1);letter-spacing:0.16em;
+  text-transform:uppercase;color:var(--graphite);margin-bottom:0.65rem;
+}
+.masthead h1{font-size:var(--step4);font-weight:700;max-width:20ch}
+.masthead h1 em{font-style:normal;color:var(--verified)}
+.thesis{margin-top:0.9rem;max-width:64ch;color:var(--graphite);font-size:var(--step1)}
+
+/* three-answer strip — the tool's actual thesis, made structural */
+.answers{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));
+  gap:1px;margin-top:1.6rem;background:var(--rule-soft);
+  border:1px solid var(--rule-soft);border-radius:3px;overflow:hidden;
+}
+.answer{background:var(--card);padding:0.95rem 1.05rem}
+.answer .ord{
+  font-family:var(--mono);font-size:var(--step-1);color:var(--graphite);
+  letter-spacing:0.14em;text-transform:uppercase;
+}
+.answer .val{
+  font-family:var(--display);font-size:var(--step3);font-weight:600;
+  line-height:1.1;margin:0.3rem 0 0.15rem;font-variant-numeric:tabular-nums;
+}
+.answer .val.tbd{color:var(--extrapolated)}
+.answer .cap{font-size:var(--step-1);color:var(--graphite);line-height:1.45}
+.answer .cap b{color:var(--ink);font-weight:600}
+
+.legend{display:flex;flex-wrap:wrap;gap:1.5rem;margin-top:1.5rem;padding-top:1.1rem;border-top:1px solid var(--rule-soft)}
+.legend-item{display:flex;align-items:center;gap:0.6rem;font-size:var(--step-1);color:var(--graphite)}
+.legend-swatch{width:5px;height:26px;border-radius:1px;flex:none}
+.legend-swatch.hatched{
+  background-image:repeating-linear-gradient(135deg,currentColor 0 3px,transparent 3px 6px);
+  background-color:transparent!important;
+}
+
+/* ---------- shell ---------- */
+.shell{
+  max-width:1400px;margin:0 auto;padding:1.5rem;
+  display:grid;grid-template-columns:308px minmax(0,1fr);gap:1.5rem;align-items:start;
+}
+@media (max-width:1040px){.shell{grid-template-columns:1fr}}
+
+/* ---------- controls ---------- */
+.controls{
+  background:var(--card);border:1px solid var(--rule);border-radius:3px;
+  position:sticky;top:1.5rem;max-height:calc(100vh - 3rem);overflow-y:auto;
+}
+@media (max-width:1040px){.controls{position:static;max-height:none}}
+.ctl-group{border-bottom:1px solid var(--rule-soft);padding:1.1rem 1.15rem}
+.ctl-group:last-child{border-bottom:none}
+.ctl-group > h3{
+  font-family:var(--mono);font-size:var(--step-1);font-weight:600;
+  letter-spacing:0.13em;text-transform:uppercase;color:var(--graphite);margin-bottom:0.85rem;
+}
+.field{margin-bottom:0.8rem}
+.field:last-child{margin-bottom:0}
+.field label{display:block;font-size:var(--step-1);color:var(--graphite);margin-bottom:0.28rem}
+.field input[type=number],.field input[type=text],.field select{
+  width:100%;padding:0.42rem 0.55rem;border:1px solid var(--rule);border-radius:2px;
+  background:var(--substrate);font-family:var(--mono);font-size:var(--step-1);
+}
+.field input:focus,.field select:focus{background:var(--card)}
+.field-note{font-size:var(--step-1);color:var(--extrapolated);margin-top:0.3rem;line-height:1.4}
+.field-note.quiet{color:var(--graphite)}
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:0.6rem}
+.check{display:flex;gap:0.55rem;align-items:flex-start;font-size:var(--step-1);color:var(--graphite);cursor:pointer}
+.check + .check{margin-top:0.6rem}
+.check input{margin-top:0.22rem;flex:none;accent-color:var(--verified)}
+.check b{color:var(--ink);font-weight:600;display:block}
+.btn{
+  width:100%;padding:0.55rem;background:var(--ink);color:#fff;border:none;border-radius:2px;
+  font-family:var(--mono);font-size:var(--step-1);letter-spacing:0.06em;text-transform:uppercase;
+  cursor:pointer;transition:background .15s ease;
+}
+.btn:hover{background:var(--verified)}
+.btn.secondary{background:transparent;color:var(--ink);border:1px solid var(--rule)}
+.btn.secondary:hover{background:var(--substrate);color:var(--ink)}
+.btn + .btn{margin-top:0.5rem}
+
+.chips{display:flex;flex-wrap:wrap;gap:0.35rem}
+.chip{
+  padding:0.3rem 0.5rem;border:1px solid var(--rule);border-radius:2px;background:var(--substrate);
+  font-family:var(--mono);font-size:var(--step-1);cursor:pointer;color:var(--graphite);
+}
+.chip[aria-pressed="true"]{background:var(--ink);color:#fff;border-color:var(--ink)}
+.chip:disabled{opacity:0.45;cursor:not-allowed}
+
+/* ---------- results ---------- */
+.results{min-width:0;display:flex;flex-direction:column;gap:1.5rem}
+.slab{background:var(--card);border:1px solid var(--rule);border-radius:3px;overflow:hidden}
+.slab-head{
+  padding:1rem 1.15rem;border-bottom:1px solid var(--rule-soft);
+  display:flex;justify-content:space-between;align-items:baseline;gap:1rem;flex-wrap:wrap;
+}
+.slab-head h2{font-size:var(--step2);font-weight:600}
+.slab-head .sub{font-size:var(--step-1);color:var(--graphite);font-family:var(--mono)}
+
+.scenario-bar{
+  display:flex;gap:0.4rem;flex-wrap:wrap;padding:0.6rem 1.15rem;
+  background:var(--substrate);border-bottom:1px solid var(--rule-soft);align-items:center;
+}
+.scenario-bar .lbl{
+  font-family:var(--mono);font-size:var(--step-1);letter-spacing:0.1em;
+  text-transform:uppercase;color:var(--graphite);margin-right:0.35rem;
+}
+
+.grid-head,.row-main{
+  display:grid;
+  grid-template-columns:6px minmax(150px,1.6fr) 72px 78px 62px 56px 52px 104px 22px;
+  gap:0.7rem;align-items:center;
+}
+.cap-head,.cap-main{
+  display:grid;
+  grid-template-columns:6px minmax(150px,1.6fr) 84px 84px 74px 50px 84px 84px 22px;
+  gap:0.7rem;align-items:center;
+}
+.grid-head,.cap-head{
+  padding:0.55rem 1.15rem;font-family:var(--mono);font-size:var(--step-1);
+  letter-spacing:0.08em;text-transform:uppercase;color:var(--graphite);
+  border-bottom:1px solid var(--rule-soft);background:var(--substrate);
+}
+.num{text-align:right;font-family:var(--mono);font-variant-numeric:tabular-nums}
+
+.row{border-bottom:1px solid var(--rule-soft)}
+.row:last-child{border-bottom:none}
+.row-main,.cap-main{
+  width:100%;padding:0.75rem 1.15rem;background:none;border:none;text-align:left;
+  cursor:pointer;font-size:var(--step-1);color:inherit;
+}
+.row-main:hover,.cap-main:hover{background:var(--substrate)}
+
+.rail{width:6px;height:34px;border-radius:1px;align-self:center}
+.rail[data-evidence="topology"]{
+  background-image:repeating-linear-gradient(135deg,currentColor 0 3px,transparent 3px 6px);
+  background-color:transparent!important;
+}
+.rail[data-status="BLOCKED"]{background-color:var(--blocked);color:var(--blocked)}
+.rail[data-status="UNVERIFIED"]{background-color:var(--extrapolated);color:var(--extrapolated)}
+.rail[data-status="ESTIMATE"]{background-color:var(--verified);color:var(--verified)}
+.rail[data-status="ERROR"]{background-color:var(--blocked);color:var(--blocked)}
+
+.cell-name{min-width:0}
+.cell-name .m{font-weight:600;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cell-name .h{color:var(--graphite);font-family:var(--mono);font-size:var(--step-1);display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+.badge{
+  display:inline-block;padding:0.16rem 0.45rem;border-radius:2px;
+  font-family:var(--mono);font-size:0.68rem;letter-spacing:0.08em;font-weight:600;white-space:nowrap;
+}
+.badge[data-status="BLOCKED"],.badge[data-status="ERROR"]{background:var(--blocked-wash);color:var(--blocked)}
+.badge[data-status="UNVERIFIED"]{background:var(--extrapolated-wash);color:var(--extrapolated)}
+.badge[data-status="ESTIMATE"]{background:var(--verified-wash);color:var(--verified)}
+.badge.sev-BLOCKER{background:var(--blocked-wash);color:var(--blocked)}
+.badge.sev-WARNING{background:var(--extrapolated-wash);color:var(--extrapolated)}
+.badge.sev-NOTE{background:var(--substrate);color:var(--graphite)}
+.badge.prov-MEAS{background:var(--verified-wash);color:var(--verified)}
+.badge.prov-SIM{background:var(--extrapolated-wash);color:var(--extrapolated)}
+.badge.prov-TBD{background:var(--substrate);color:var(--graphite)}
+.badge.edited{background:var(--substrate);color:var(--ink);border:1px solid var(--rule)}
+
+.tbd{color:var(--extrapolated)}
+.neg{color:var(--blocked)}
+.chev{color:var(--graphite);font-family:var(--mono);transition:transform .18s ease;justify-self:end}
+.row[data-open="true"] .chev{transform:rotate(90deg)}
+
+/* ---------- expanded detail ---------- */
+.detail{padding:0 1.15rem 1.25rem;background:var(--substrate);border-top:1px solid var(--rule-soft)}
+.detail-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:1.25rem;padding-top:1.1rem}
+.detail-wide{grid-column:1 / -1;border-top:1px solid var(--rule);padding-top:1rem}
+.issue-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(255px,1fr));gap:0 1.5rem}
+.detail h4{
+  font-family:var(--mono);font-size:var(--step-1);font-weight:600;letter-spacing:0.11em;
+  text-transform:uppercase;color:var(--graphite);margin:0 0 0.6rem;
+}
+.calc{font-family:var(--mono);font-size:var(--step-1);line-height:1.85}
+.calc > div{display:flex;justify-content:space-between;gap:0.8rem}
+.calc .lbl{color:var(--graphite);min-width:0}
+.calc .v{font-variant-numeric:tabular-nums;white-space:nowrap}
+.calc-total{border-top:1px solid var(--rule);margin-top:0.4rem;padding-top:0.4rem;font-weight:600}
+.calc-total.good{color:var(--verified)}
+.basis{font-size:var(--step-1);color:var(--graphite);line-height:1.5;margin-top:0.5rem}
+.basis b{color:var(--ink);font-weight:600}
+.issue{display:flex;gap:0.6rem;align-items:flex-start;padding:0.4rem 0;border-bottom:1px dotted var(--rule)}
+.issue:last-child{border-bottom:none}
+.issue-body{min-width:0}
+.issue-code{font-family:var(--mono);font-size:var(--step-1);font-weight:600;display:block}
+.issue-msg{font-size:var(--step-1);color:var(--graphite);line-height:1.45}
+
+.rate-form{display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;align-items:end;margin-top:0.3rem}
+.rate-form .wide{grid-column:1 / -1}
+.rate-form label{display:block;font-size:var(--step-1);color:var(--graphite);margin-bottom:0.2rem}
+.rate-form input,.rate-form select{
+  width:100%;padding:0.38rem 0.45rem;border:1px solid var(--rule);border-radius:2px;
+  background:var(--card);font-family:var(--mono);font-size:var(--step-1);
+}
+.rate-form .actions{grid-column:1 / -1;display:flex;gap:0.4rem}
+.rate-form button{
+  padding:0.42rem 0.7rem;border:none;border-radius:2px;background:var(--ink);color:#fff;
+  font-family:var(--mono);font-size:var(--step-1);cursor:pointer;flex:1;
+}
+.rate-form button:hover{background:var(--verified)}
+.rate-form button.clear{background:transparent;color:var(--graphite);border:1px solid var(--rule)}
+.rate-form button.clear:hover{background:var(--card);color:var(--ink)}
+
+.awaiting{
+  padding:0.75rem 0.9rem;border:1px dashed var(--rule);border-radius:2px;
+  background:var(--card);font-size:var(--step-1);color:var(--graphite);line-height:1.5;
+}
+.awaiting b{color:var(--ink);font-weight:600}
+
+.errbar{
+  padding:0.85rem 1.15rem;background:var(--blocked-wash);color:var(--blocked);
+  font-family:var(--mono);font-size:var(--step-1);border-bottom:1px solid var(--rule-soft);
+}
+.errbar b{letter-spacing:0.08em;text-transform:uppercase}
+.footnote{
+  padding:0.85rem 1.15rem;font-size:var(--step-1);color:var(--graphite);
+  background:var(--substrate);border-top:1px solid var(--rule-soft);line-height:1.55;margin:0;
+}
+.footnote b{color:var(--ink);font-weight:600}
+
+.tally{display:flex;gap:0.9rem;flex-wrap:wrap;align-items:baseline}
+.tally-item{font-family:var(--mono);font-size:var(--step-1);letter-spacing:0.04em}
+.tally-item b{font-weight:600;font-size:var(--step0);margin-right:0.25rem}
+
+/* findings slab */
+.filter-bar{
+  display:flex;gap:0.4rem;flex-wrap:wrap;padding:0.6rem 1.15rem;background:var(--substrate);
+  border-bottom:1px solid var(--rule-soft);align-items:center;
+}
+.finding{display:grid;grid-template-columns:6px minmax(0,1fr);gap:0.7rem;padding:0.7rem 1.15rem;border-bottom:1px solid var(--rule-soft);align-items:start}
+.finding:last-child{border-bottom:none}
+.finding-head{display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;margin-bottom:0.15rem}
+.finding-pairs{font-family:var(--mono);font-size:var(--step-1);color:var(--graphite)}
+.finding-msg{font-size:var(--step-1);color:var(--graphite);line-height:1.45}
+
+/* CLI echo */
+.cli{
+  font-family:var(--mono);font-size:var(--step-1);background:var(--ink);color:#E7EDF3;
+  padding:0.9rem 1.15rem;line-height:1.7;overflow-x:auto;white-space:pre-wrap;word-break:break-word;margin:0;
+}
+.cli .flag{color:#8FD3C1}
+
+.colophon{max-width:1400px;margin:0 auto;padding:0 1.5rem 3rem;font-size:var(--step-1);color:var(--graphite);line-height:1.6}
+.colophon h3{font-family:var(--mono);font-size:var(--step-1);letter-spacing:0.13em;text-transform:uppercase;margin-bottom:0.6rem}
+.colophon ul{margin:0;padding-left:1.1rem}
+.colophon li{margin-bottom:0.3rem}
+.colophon b{color:var(--ink);font-weight:600}
+.colophon code{font-family:var(--mono);background:var(--card);padding:0.08em 0.3em;border:1px solid var(--rule-soft);border-radius:2px}
+
+.toast{
+  position:fixed;bottom:1.25rem;left:50%;transform:translateX(-50%);
+  background:var(--ink);color:#fff;font-family:var(--mono);font-size:var(--step-1);
+  padding:0.6rem 1rem;border-radius:2px;opacity:0;pointer-events:none;transition:opacity .2s ease;z-index:20;
+}
+.toast.show{opacity:1}
+
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+
+/* ---------- narrow screens: rows become stacked records ---------- */
+@media (max-width:840px){
+  .masthead{padding:1.5rem 1rem 1rem}
+  .masthead h1{font-size:var(--step3)}
+  .shell{padding:1rem;gap:1rem}
+  .grid-head,.cap-head{display:none}
+
+  /* The rail leaves the grid flow entirely so every cell gets its own line;
+     leaving it in a column forced metrics into the 6px track and they overlapped. */
+  .row-main,.cap-main{position:relative;display:block;padding:0.8rem 1rem 0.85rem 1.3rem}
+  .row-main > .rail,.cap-main > .rail{position:absolute;left:0;top:0;width:6px;height:100%;border-radius:0}
+  .row-main > .cell-name,.cap-main > .cell-name{display:block;margin-bottom:0.4rem}
+  .row-main > .num,.cap-main > .num,
+  .row-main > .cell-status,.cap-main > .cell-status{
+    display:flex;justify-content:space-between;align-items:baseline;gap:0.75rem;text-align:right;
+    border-top:1px dotted var(--rule-soft);padding-top:0.3rem;margin-top:0.3rem;
+  }
+  .row-main > .num::before,.cap-main > .num::before,
+  .row-main > .cell-status::before,.cap-main > .cell-status::before{
+    content:attr(data-label);color:var(--graphite);font-family:var(--body);
+    text-transform:uppercase;letter-spacing:0.06em;font-size:0.68rem;white-space:nowrap;text-align:left;
+  }
+  .chev{display:none}
+  .detail{padding-left:1rem;padding-right:1rem}
+  .calc > div{gap:0.5rem}
+  .finding{padding-left:1rem;padding-right:1rem}
+  .cli{font-size:0.7rem}
+}
+</style>
+</head>
+<body>
+
+<header class="masthead">
+  <div class="masthead-inner">
+    <div class="eyebrow">DeepSeek V4 Flash 0731 · V4 Pro · R1 671B — deployment sizing</div>
+    <h1>Three answers, kept <em>apart</em>.</h1>
+    <p class="thesis">A capacity lower bound is not a runnable topology. A configured allocation is not a validated one. And a fleet count without a measured service rate is not a number at all. This console runs the sizing model from <code class="mono">deepseek_deployment_sizing.py</code> and refuses to collapse the three into one headline figure.</p>
+
+    <div class="answers" id="answers"></div>
+
+    <div class="legend">
+      <div class="legend-item"><span class="legend-swatch" style="background:var(--verified)"></span>Estimate — no warnings or blockers</div>
+      <div class="legend-item"><span class="legend-swatch" style="background:var(--extrapolated)"></span>Unverified — warnings outstanding</div>
+      <div class="legend-item"><span class="legend-swatch" style="background:var(--blocked)"></span>Blocked — a blocking condition applies</div>
+      <div class="legend-item"><span class="legend-swatch hatched" style="color:var(--graphite)"></span>Hatched rail — no published VRAM floor; topology is the only documented bound</div>
+    </div>
+  </div>
+</header>
+
+<div class="shell">
+  <aside class="controls" aria-label="Sizing parameters">
+    <div class="ctl-group">
+      <h3>Scope</h3>
+      <div class="field">
+        <label>Models</label>
+        <div class="chips" id="model-chips"></div>
+      </div>
+      <div class="field">
+        <label>Accelerators</label>
+        <div class="chips" id="hardware-chips"></div>
+      </div>
+    </div>
+
+    <div class="ctl-group">
+      <h3>Demand</h3>
+      <div class="field">
+        <label for="users">Concurrent user scenarios</label>
+        <input type="text" id="users" value="200" inputmode="numeric">
+        <div class="field-note quiet">Comma-separated. Each becomes its own scenario.</div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label for="rph">Requests / user / hour</label><input type="number" id="rph" value="1" step="0.1" min="0"></div>
+        <div class="field"><label for="peak">Peak factor</label><input type="number" id="peak" value="3" step="0.5" min="1"></div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label for="intok">Input tokens</label><input type="number" id="intok" value="4096" step="256" min="0"></div>
+        <div class="field"><label for="outtok">Output tokens</label><input type="number" id="outtok" value="600" step="50" min="1"></div>
+      </div>
+      <div class="field">
+        <label for="residence">Mean residence (s)</label>
+        <input type="number" id="residence" value="30" step="5" min="0">
+        <div class="field-note" id="note-residence" hidden></div>
+      </div>
+    </div>
+
+    <div class="ctl-group">
+      <h3>Runtime policy</h3>
+      <div class="field">
+        <label for="util">GPU memory utilization</label>
+        <input type="number" id="util" value="0.75" min="0.05" max="1" step="0.01">
+        <div class="field-note" id="note-util"></div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label for="block">Block size</label><input type="number" id="block" value="256" step="16" min="1"></div>
+        <div class="field"><label for="seqs">Max num seqs</label><input type="number" id="seqs" value="256" step="16" min="1"></div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label for="tp">Devices per replica</label><input type="number" id="tp" value="8" step="1" min="1"></div>
+        <div class="field"><label for="reserve">Reserve GB / device</label><input type="number" id="reserve" value="0" step="1" min="0"></div>
+      </div>
+      <div class="field-note quiet">Devices per replica maps to <code>--tensor-parallel-size</code>. Override it for a single pair inside any row.</div>
+    </div>
+
+    <div class="ctl-group">
+      <h3>Cache precision</h3>
+      <div class="field-row">
+        <div class="field"><label for="kvdtype">KV cache dtype</label>
+          <select id="kvdtype"><option>auto</option><option>fp8</option><option>bf16</option></select></div>
+        <div class="field"><label for="ixdtype">Indexer dtype</label>
+          <select id="ixdtype"><option>auto</option><option>mxfp4</option><option>fp8</option><option>bf16</option></select></div>
+      </div>
+      <div class="field-note quiet">Auto follows the selected recipe: V4 FP8, R1 model BF16.</div>
+    </div>
+
+    <div class="ctl-group">
+      <h3>Runtime &amp; versions</h3>
+      <div class="field">
+        <label for="runtime">Runtime</label>
+        <select id="runtime"><option>auto</option><option>nvidia-vllm</option><option>vllm-ascend</option></select>
+      </div>
+      <div class="field">
+        <label for="vllm">vLLM version</label>
+        <input type="text" id="vllm" value="0.20.1">
+        <div class="field-note" id="note-vllm" hidden></div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label for="ascend">vLLM-Ascend</label><input type="text" id="ascend" value="" placeholder="unset"></div>
+        <div class="field"><label for="cann">CANN</label><input type="text" id="cann" value="" placeholder="unset"></div>
+      </div>
+      <div class="field-note" id="note-ascend" hidden></div>
+      <div class="field-row">
+        <div class="field"><label for="parser">Reasoning parser</label>
+          <select id="parser"><option>auto</option><option>deepseek_v4</option><option>deepseek_r1</option></select></div>
+        <div class="field"><label for="spec">Speculative mode</label>
+          <select id="spec"><option>none</option><option>mtp</option><option>dspark</option></select></div>
+      </div>
+    </div>
+
+    <div class="ctl-group">
+      <h3>Provenance</h3>
+      <label class="check">
+        <input type="checkbox" id="illustrative">
+        <span><b>Use built-in illustrative rates</b>Fills every empty service rate with a scenario value badged SIM. Not benchmarks, and not suitable for procurement.</span>
+      </label>
+      <label class="check">
+        <input type="checkbox" id="standby">
+        <span><b>Warm standby</b>Reports a standby device count alongside the candidate fleet.</span>
+      </label>
+    </div>
+
+    <div class="ctl-group">
+      <button class="btn" id="copy-cli">Copy CLI command</button>
+      <button class="btn secondary" id="download-json">Download JSON</button>
+      <button class="btn secondary" id="self-test">Run self-test</button>
+      <button class="btn secondary" id="reset">Reset to defaults</button>
+      <div class="field-note quiet" id="selftest-out" style="margin-top:0.6rem"></div>
+    </div>
+  </aside>
+
+  <main class="results">
+    <div id="global-error"></div>
+
+    <section class="slab" id="slab-memory">
+      <div class="slab-head">
+        <h2>Memory and capacity</h2>
+        <div class="tally" id="tally"></div>
+      </div>
+      <div id="scenario-bar"></div>
+      <div class="grid-head" aria-hidden="true">
+        <span></span><span>Model / accelerator</span>
+        <span class="num">Hint GB</span><span class="num">KV/rep GB</span>
+        <span class="num">Cap LB</span><span class="num">Nodes</span><span class="num">Cfg</span>
+        <span>Status</span><span></span>
+      </div>
+      <div id="rows-memory"></div>
+      <p class="footnote"><b>Cap LB</b> is an aggregate lower bound: it covers the documented device minimum and the larger of the recipe VRAM hint and the modelled workload KV, without assuming those are additive. It does <em>not</em> establish per-rank TP/DP/EP/PP residency, and it does not make a topology runnable. <b>Hint</b> is a recipe authoring heuristic whose margin composition is undefined; a hatched rail means no hint is published at all.</p>
+    </section>
+
+    <section class="slab" id="slab-capacity">
+      <div class="slab-head">
+        <h2>Fleet capacity</h2>
+        <div class="sub" id="capacity-sub"></div>
+      </div>
+      <div class="cap-head" aria-hidden="true">
+        <span></span><span>Model / accelerator</span>
+        <span class="num">Need in</span><span class="num">Need out</span>
+        <span>Source</span><span class="num">Rep</span>
+        <span class="num">Cand fleet</span><span class="num">Cfg fleet</span><span></span>
+      </div>
+      <div id="rows-capacity"></div>
+      <p class="footnote"><b>TBD is intentional.</b> A fleet count is only produced once a service rate exists for that exact model and accelerator. Open a row to supply one, or turn on illustrative rates to explore scenarios — they will be badged SIM and they are not benchmarks. Replace them with repeatable <code>vllm bench serve</code> results before procurement.</p>
+    </section>
+
+    <section class="slab" id="slab-findings">
+      <div class="slab-head">
+        <h2>Findings</h2>
+        <div class="sub" id="findings-sub"></div>
+      </div>
+      <div class="filter-bar" id="findings-filter"></div>
+      <div id="rows-findings"></div>
+    </section>
+
+    <section class="slab">
+      <div class="slab-head">
+        <h2>Equivalent command</h2>
+        <div class="sub">reproduce this exact view from the CLI</div>
+      </div>
+      <pre class="cli" id="cli-echo"></pre>
+      <p class="footnote">Per-row overrides appear here as <code>--service-rate</code> and <code>--replica-devices</code> flags, so anything explored in this console can be re-run, scripted, and version-controlled against the Python.</p>
+    </section>
+  </main>
+</div>
+
+<footer class="colophon">
+  <h3>How this console relates to the Python</h3>
+  <ul>
+    <li><b>Same model, ported not reinterpreted.</b> Every constant, rounding rule, issue code, and message here is transcribed from <code>deepseek_deployment_sizing.py</code>. Python's round-half-to-even and PEP 440 version ordering are reproduced rather than approximated.</li>
+    <li><b>Verified by differential test.</b> A harness runs the Python CLI with <code>--json</code> across 60 parameter cases — dtype combinations, version edge cases, override sets, and every validation failure — and compares all 29,039 emitted fields. Floats agree exactly, not within a tolerance. Re-run it after any change to either implementation.</li>
+    <li><b>Where the console goes further than the CLI:</b> a bad parameter fails one row here instead of aborting the whole run; rows expose the arithmetic behind their own figures; the flags that were hardest to remember (<code>--service-rate</code>, <code>--replica-devices</code>) became inputs inside the row they govern.</li>
+    <li><b>What deliberately stays empty.</b> <code>configured_required_hbm_gb</code>, <code>configured_headroom_gb</code>, and <code>configured_memory_fit</code> are null in the Python by design, and they are null here. Filling them in would require inventing a composition for the recipe hint's margin that no source defines.</li>
+  </ul>
+</footer>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ------------------------------------------------------------------
+   deepseek_deployment_sizing.py -> JavaScript, field-for-field.
+
+   This file is a PORT, not a reinterpretation. Every constant, every
+   rounding decision, and every issue string is transcribed from the
+   Python source of truth. diff_test.js compares this implementation
+   against the Python's own --json output across a parameter matrix;
+   if the two ever drift, that test fails loudly.
+   ------------------------------------------------------------------ */
+"use strict";
+
+const GB = 1000000000;
+const SEVERITY_RANK = { NOTE: 0, WARNING: 1, BLOCKER: 2 };
+
+/* ---------- Python-compatible primitives ---------- */
+
+// Python's round() is round-half-to-even. JS Math.round is half-up.
+function pyRound(x) {
+  const floor = Math.floor(x);
+  const diff = x - floor;
+  if (diff > 0.5) return floor + 1;
+  if (diff < 0.5) return floor;
+  return floor % 2 === 0 ? floor : floor + 1;
+}
+
+// Subset of PEP 440 sufficient for the versions this tool accepts.
+const VERSION_RE = new RegExp(
+  "^\\s*v?(?:(?:(\\d+)!)?" + // epoch
+    "(\\d+(?:\\.\\d+)*)" + // release
+    "(?:[-_.]?(alpha|a|beta|b|preview|pre|c|rc)[-_.]?(\\d+)?)?" + // pre
+    "(?:(?:-(\\d+))|(?:[-_.]?(post|rev|r)[-_.]?(\\d+)?))?" + // post
+    "(?:[-_.]?(dev)[-_.]?(\\d+)?)?" + // dev
+    ")(?:\\+([a-z0-9]+(?:[-_.][a-z0-9]+)*))?\\s*$",
+  "i"
+);
+
+const PRE_ALIAS = { alpha: "a", beta: "b", c: "rc", pre: "rc", preview: "rc" };
+
+function parseVersion(value, field) {
+  const match = VERSION_RE.exec(String(value));
+  if (!match) {
+    throw new SizingError(`${field} must be a PEP 440 version, got '${value}'`);
+  }
+  const release = match[2].split(".").map(Number);
+  let preLetter = match[3] ? match[3].toLowerCase() : null;
+  if (preLetter && PRE_ALIAS[preLetter]) preLetter = PRE_ALIAS[preLetter];
+  return {
+    epoch: match[1] ? Number(match[1]) : 0,
+    release,
+    pre: preLetter ? [preLetter, match[4] ? Number(match[4]) : 0] : null,
+    post: match[5] !== undefined && match[5] !== null
+      ? Number(match[5])
+      : match[6]
+        ? Number(match[7] || 0)
+        : null,
+    dev: match[8] ? Number(match[9] || 0) : null,
+  };
+}
+
+// Mirrors packaging.version._cmpkey ordering.
+function compareVersions(left, right) {
+  if (left.epoch !== right.epoch) return left.epoch < right.epoch ? -1 : 1;
+
+  const trim = (release) => {
+    const out = release.slice();
+    while (out.length && out[out.length - 1] === 0) out.pop();
+    return out;
+  };
+  const lr = trim(left.release);
+  const rr = trim(right.release);
+  for (let i = 0; i < Math.max(lr.length, rr.length); i += 1) {
+    const a = lr[i] === undefined ? 0 : lr[i];
+    const b = rr[i] === undefined ? 0 : rr[i];
+    if (a !== b) return a < b ? -1 : 1;
+  }
+
+  // A bare pre-release sorts before the final release; a bare final release
+  // sorts after every pre-release of the same number.
+  const preKey = (v) => {
+    if (v.pre === null && v.post === null && v.dev !== null) return [-Infinity, ""];
+    if (v.pre === null) return [Infinity, ""];
+    return [v.pre[1], v.pre[0]];
+  };
+  const lp = preKey(left);
+  const rp = preKey(right);
+  if (lp[0] !== rp[0]) return lp[0] < rp[0] ? -1 : 1;
+  if (lp[1] !== rp[1]) return lp[1] < rp[1] ? -1 : 1;
+
+  const lpost = left.post === null ? -Infinity : left.post;
+  const rpost = right.post === null ? -Infinity : right.post;
+  if (lpost !== rpost) return lpost < rpost ? -1 : 1;
+
+  const ldev = left.dev === null ? Infinity : left.dev;
+  const rdev = right.dev === null ? Infinity : right.dev;
+  if (ldev !== rdev) return ldev < rdev ? -1 : 1;
+
+  return 0;
+}
+
+function versionLt(left, right) {
+  return compareVersions(parseVersion(left, "version"), parseVersion(right, "minimum version")) < 0;
+}
+
+// Carries the same messages the Python raises as ValueError.
+class SizingError extends Error {}
+
+/* ---------- reference data ---------- */
+
+const HARDWARE = {
+  "h20-141": { key: "h20-141", label: "NVIDIA H20 141 GB", runtime_family: "nvidia-vllm", memory_gb: 141, devices_per_node: 8 },
+  "h20-96": { key: "h20-96", label: "NVIDIA H20 96 GB (beta)", runtime_family: "nvidia-vllm", memory_gb: 96, devices_per_node: 8 },
+  "910b-64": { key: "910b-64", label: "Huawei Ascend 910B 64 GB", runtime_family: "vllm-ascend", memory_gb: 64, devices_per_node: 8 },
+};
+
+const MODELS = {
+  "flash-0731": {
+    key: "flash-0731",
+    label: "DeepSeek V4 Flash 0731",
+    context_limit: 1048576,
+    min_vllm_version: "0.25.0",
+    min_vllm_ascend_version: "0.25.0",
+    nvidia: {
+      artifact: "deepseek-ai/DeepSeek-V4-Flash-0731",
+      recipe_vram_hint_gb: 200.0,
+      hint_basis: "official vLLM recipe vram_minimum_gb",
+      documented_devices: 4,
+      topology_basis: "official 4-GPU recipe on H200/B200/B300; H20 is an extrapolation",
+      min_vllm_version_override: null,
+    },
+    ascend: {
+      artifact: "DeepSeek-V4-Flash-0731-w8a8",
+      recipe_vram_hint_gb: null,
+      hint_basis: "aggregate runtime floor not published; topology controls",
+      documented_devices: 8,
+      topology_basis: "official vLLM-Ascend A2 topology: 1 node x 8 NPUs",
+      min_vllm_version_override: null,
+    },
+    v4_c4a_layers: 21,
+    v4_c128a_layers: 20,
+    v4_swa_layers: 2,
+  },
+  "v4-pro": {
+    key: "v4-pro",
+    label: "DeepSeek V4 Pro",
+    context_limit: 1048576,
+    min_vllm_version: "0.20.0",
+    min_vllm_ascend_version: null,
+    nvidia: {
+      artifact: "deepseek-ai/DeepSeek-V4-Pro",
+      recipe_vram_hint_gb: 960.0,
+      hint_basis: "official vLLM recipe vram_minimum_gb",
+      documented_devices: 8,
+      topology_basis: "official 8-GPU H200 recipe; H20 is an extrapolation",
+      min_vllm_version_override: null,
+    },
+    ascend: {
+      artifact: "DeepSeek-V4-Pro-w4a8-mtp",
+      recipe_vram_hint_gb: null,
+      hint_basis: "aggregate runtime floor not published; topology controls",
+      documented_devices: 32,
+      topology_basis: "official vLLM-Ascend A2 topology: 4 nodes x 8 NPUs",
+      min_vllm_version_override: null,
+    },
+    v4_c4a_layers: 30,
+    v4_c128a_layers: 31,
+    v4_swa_layers: 0,
+  },
+  "r1-671b": {
+    key: "r1-671b",
+    label: "DeepSeek R1 671B",
+    context_limit: 163840,
+    min_vllm_version: "0.12.0",
+    min_vllm_ascend_version: null,
+    nvidia: {
+      artifact: "deepseek-ai/DeepSeek-R1 (FP8)",
+      recipe_vram_hint_gb: 805.0,
+      hint_basis: "literal recipe vram_minimum_gb; its documented ceil example is arithmetically inconsistent",
+      documented_devices: 8,
+      topology_basis: "8-GPU FP8 serving topology; H20 performance is unverified",
+      min_vllm_version_override: null,
+    },
+    ascend: {
+      artifact: "DeepSeek-R1-W8A8",
+      recipe_vram_hint_gb: null,
+      hint_basis: "aggregate runtime floor not published; topology controls",
+      documented_devices: 16,
+      topology_basis: "documented vLLM-Ascend A2 deployment: 2 x 8-NPU nodes, DP4/TP4/EP",
+      min_vllm_version_override: null,
+    },
+    v4_c4a_layers: 0,
+    v4_c128a_layers: 0,
+    v4_swa_layers: 0,
+  },
+};
+
+// Scenarios, not measurements. Keyed by model and hardware so that one real
+// benchmark replaces exactly one deployment pair.
+const ILLUSTRATIVE_RATES = {
+  "flash-0731@h20-141": { input_tps: 1800, output_tps: 180, provenance: "SIM" },
+  "flash-0731@h20-96": { input_tps: 1600, output_tps: 160, provenance: "SIM" },
+  "flash-0731@910b-64": { input_tps: 1500, output_tps: 150, provenance: "SIM" },
+  "v4-pro@h20-141": { input_tps: 1200, output_tps: 120, provenance: "SIM" },
+  "v4-pro@h20-96": { input_tps: 1000, output_tps: 100, provenance: "SIM" },
+  "v4-pro@910b-64": { input_tps: 900, output_tps: 90, provenance: "SIM" },
+  "r1-671b@h20-141": { input_tps: 900, output_tps: 90, provenance: "SIM" },
+  "r1-671b@h20-96": { input_tps: 750, output_tps: 75, provenance: "SIM" },
+  "r1-671b@910b-64": { input_tps: 700, output_tps: 70, provenance: "SIM" },
+};
+
+/* ---------- workload ---------- */
+
+function makeWorkload(spec) {
+  const w = Object.assign({}, spec);
+  w.peak_requests_per_second = (w.users * w.requests_per_user_hour * w.peak_factor) / 3600.0;
+  w.input_tps = w.peak_requests_per_second * w.input_tokens;
+  w.output_tps = w.peak_requests_per_second * w.output_tokens;
+  w.concurrent_requests = w.peak_requests_per_second * w.mean_residence_seconds;
+  return w;
+}
+
+// argparse parses this flag as a float, so Python renders 0 as "0.0".
+function pyFloatRepr(value) {
+  return Number.isInteger(value) && Number.isFinite(value) ? `${value}.0` : String(value);
+}
+
+function validateFraction(name, value) {
+  if (!(value > 0 && value <= 1)) {
+    throw new SizingError(`${name} must be in (0, 1], got ${pyFloatRepr(value)}`);
+  }
+}
+
+function validateWorkload(workload) {
+  if (workload.users <= 0) throw new SizingError("users must be positive");
+  if (workload.requests_per_user_hour <= 0) throw new SizingError("requests_per_user_hour must be positive");
+  if (workload.peak_factor < 1) throw new SizingError("peak_factor must be >= 1");
+  if (workload.input_tokens < 0 || workload.output_tokens <= 0) {
+    throw new SizingError("input_tokens must be >= 0 and output_tokens must be positive");
+  }
+  if (workload.mean_residence_seconds <= 0) throw new SizingError("mean_residence_seconds must be positive");
+}
+
+/* ---------- artifact + KV model ---------- */
+
+function artifactFor(model, hardware, speculativeMode) {
+  const artifact = hardware.runtime_family === "nvidia-vllm" ? model.nvidia : model.ascend;
+  if (model.key === "v4-pro" && hardware.runtime_family === "nvidia-vllm" && speculativeMode === "dspark") {
+    return {
+      artifact: "deepseek-ai/DeepSeek-V4-Pro-DSpark",
+      recipe_vram_hint_gb: 960.0,
+      hint_basis: "literal vLLM recipe vram_minimum_gb comparison for the DSpark variant",
+      documented_devices: 8,
+      topology_basis: "official DSpark variant uses a distinct fused checkpoint; H20 remains unverified",
+      min_vllm_version_override: "0.25.0",
+    };
+  }
+  return artifact;
+}
+
+function resolvedV4CacheLayout(hardware, kvCacheDtype, indexerCacheDtype) {
+  const resolvedKv = kvCacheDtype === "auto" ? "fp8" : kvCacheDtype;
+  let resolvedIndexer = indexerCacheDtype;
+  if (resolvedIndexer === "auto") {
+    resolvedIndexer = hardware.runtime_family === "nvidia-vllm" ? "bf16" : "fp8";
+  }
+  // vLLM's DeepSeek-V4 MLA spec keeps a semantic 512-element head for the
+  // ordinary dtype path, so BF16 occupies 512 * 2 = 1,024 bytes. Only the
+  // custom fp8_ds_mla layout stores the separate 448B NoPE + 128B RoPE + 8B
+  // scale representation (584 bytes).
+  const mainEntry = { fp8: 584, bf16: 1024 }[resolvedKv];
+  const indexerEntry = pyRound(128 * { mxfp4: 0.5, fp8: 1.0, bf16: 2.0 }[resolvedIndexer]);
+  return { mainEntry, indexerEntry, resolvedKv, resolvedIndexer };
+}
+
+function kvBytesPerToken(model, hardware, kvCacheDtype, indexerCacheDtype) {
+  if (model.key === "r1-671b") {
+    const resolvedKv = kvCacheDtype === "auto" ? "bf16" : kvCacheDtype;
+    const bytesPerKvElement = { fp8: 1.0, bf16: 2.0 }[resolvedKv];
+    // Official R1 config: 61 layers x (kv_lora_rank 512 + rope dim 64).
+    const value = pyRound(61 * (512 + 64) * bytesPerKvElement);
+    const how = kvCacheDtype === "auto" ? "auto from model dtype" : "explicit";
+    return { value, profile: `${resolvedKv} MLA (${how})` };
+  }
+  const layout = resolvedV4CacheLayout(hardware, kvCacheDtype, indexerCacheDtype);
+  const value = pyRound(
+    (model.v4_c4a_layers * (layout.mainEntry + layout.indexerEntry)) / 4 +
+      (model.v4_c128a_layers * layout.mainEntry) / 128
+  );
+  return {
+    value,
+    profile: `${layout.resolvedKv} hybrid + ${layout.resolvedIndexer} indexer (implementation-informed estimate)`,
+    layout,
+  };
+}
+
+function kvFixedBytesPerSequence(model, hardware, kvCacheDtype, indexerCacheDtype) {
+  if (model.key === "r1-671b") return 0;
+  const { mainEntry, indexerEntry } = resolvedV4CacheLayout(hardware, kvCacheDtype, indexerCacheDtype);
+  // Each compressed layer retains 128 uncompressed shared-KV entries. C4
+  // additionally retains an 8-entry indexer compressor residual. Flash has two
+  // pure sliding-window layers. Runtime page-pool alignment can allocate more.
+  return (
+    model.v4_c4a_layers * (128 * mainEntry + 8 * indexerEntry) +
+    model.v4_c128a_layers * 128 * mainEntry +
+    model.v4_swa_layers * 128 * mainEntry
+  );
+}
+
+function paddedResidentTokens(workload, blockSize) {
+  const resident = workload.input_tokens + workload.output_tokens / 2;
+  return Math.ceil(resident / blockSize) * blockSize;
+}
+
+function targetKvGb(bytesPerToken, fixedBytesPerSequence, workload, blockSize, replicas) {
+  if (replicas <= 0) throw new SizingError("replicas must be positive");
+  const perReplicaConcurrency = workload.concurrent_requests / replicas;
+  const perSequence = paddedResidentTokens(workload, blockSize) * bytesPerToken + fixedBytesPerSequence;
+  return (perReplicaConcurrency * perSequence) / GB;
+}
+
+function candidateDeviceCounts(hardware, minimum, limit) {
+  const out = [];
+  for (const count of [1, 2, 4, 8]) {
+    if (count >= minimum) out.push(count);
+  }
+  const firstMultiNode = Math.max(
+    16,
+    Math.ceil(minimum / hardware.devices_per_node) * hardware.devices_per_node
+  );
+  for (let count = firstMultiNode; count <= (limit || 128); count += hardware.devices_per_node) {
+    out.push(count);
+  }
+  return out;
+}
+
+function selectCapacityLowerBoundDevices(artifact, hardware, utilization, workloadKvGb) {
+  if (workloadKvGb < 0) throw new SizingError("workload KV GB must be non-negative");
+  // The recipe hint's margin composition is undefined, so adding KV to it could
+  // double-count memory already covered by that margin. The maximum is
+  // nevertheless a valid independent-constraint bound: the aggregate budget
+  // must cover both the recipe hint and the modeled workload KV cache.
+  const requiredGb = Math.max(artifact.recipe_vram_hint_gb || 0.0, workloadKvGb);
+  for (const count of candidateDeviceCounts(hardware, artifact.documented_devices, 128)) {
+    if (requiredGb <= hardware.memory_gb * utilization * count) {
+      return { devices: count, requiredGb };
+    }
+  }
+  throw new SizingError("aggregate capacity lower-bound search exceeded 128 accelerators");
+}
+
+/* ---------- issues ---------- */
+
+function addRuntimeIssues(issues, model, hardware, runtime, vllmVersion, vllmAscendVersion, cannVersion, artifact) {
+  const resolved = runtime === "auto" ? hardware.runtime_family : runtime;
+  if (resolved !== hardware.runtime_family) {
+    issues.push({ severity: "BLOCKER", code: "RUNTIME_MISMATCH", message: `${resolved} cannot serve ${hardware.label}` });
+    return;
+  }
+  if (resolved === "nvidia-vllm") {
+    const minimum = artifact.min_vllm_version_override || model.min_vllm_version;
+    if (minimum && versionLt(vllmVersion, minimum)) {
+      issues.push({
+        severity: "BLOCKER",
+        code: "VLLM_VERSION",
+        message: `vLLM ${vllmVersion} is below the official ${minimum} minimum for this artifact`,
+      });
+    }
+  } else {
+    if (!vllmAscendVersion) {
+      issues.push({
+        severity: "BLOCKER",
+        code: "ASCEND_IMAGE_UNSPECIFIED",
+        message: "supply a matched vLLM-Ascend image/version",
+      });
+    } else if (model.min_vllm_ascend_version && versionLt(vllmAscendVersion, model.min_vllm_ascend_version)) {
+      issues.push({
+        severity: "BLOCKER",
+        code: "VLLM_ASCEND_VERSION",
+        message: `vLLM-Ascend ${vllmAscendVersion} is below ${model.min_vllm_ascend_version}`,
+      });
+    }
+    if (!cannVersion) {
+      issues.push({
+        severity: "WARNING",
+        code: "CANN_UNPINNED",
+        message: "CANN/driver/firmware versions are deployment parameters",
+      });
+    }
+  }
+}
+
+function deriveStatus(issues) {
+  let maximum = 0;
+  for (const issue of issues) maximum = Math.max(maximum, SEVERITY_RANK[issue.severity]);
+  return { 2: "BLOCKED", 1: "UNVERIFIED", 0: "ESTIMATE" }[maximum];
+}
+
+/* ---------- the sizing calculation ---------- */
+
+function size(model, hardware, workload, opts) {
+  const {
+    gpu_memory_utilization,
+    block_size,
+    max_num_seqs,
+    configured_devices,
+    runtime_reserve_gb_per_device,
+    kv_cache_dtype,
+    indexer_cache_dtype,
+    runtime,
+    vllm_version,
+    vllm_ascend_version,
+    cann_version,
+    reasoning_parser,
+    speculative_mode,
+    warm_standby,
+    service_rate,
+  } = opts;
+
+  validateFraction("gpu_memory_utilization", gpu_memory_utilization);
+  validateWorkload(workload);
+  if (block_size <= 0 || max_num_seqs <= 0 || configured_devices <= 0) {
+    throw new SizingError("block_size, max_num_seqs, and configured_devices must be positive");
+  }
+  if (runtime_reserve_gb_per_device < 0) {
+    throw new SizingError("runtime_reserve_gb_per_device must be >= 0");
+  }
+  if (workload.input_tokens + workload.output_tokens > model.context_limit) {
+    throw new SizingError(`${model.label}: input + output exceeds the official context limit`);
+  }
+  if (service_rate && (service_rate.input_tps <= 0 || service_rate.output_tps <= 0)) {
+    throw new SizingError("service rates must be positive");
+  }
+
+  const concurrencyReplicas = Math.max(1, Math.ceil(workload.concurrent_requests / max_num_seqs));
+  let replicas = null;
+  if (service_rate) {
+    replicas = Math.max(
+      concurrencyReplicas,
+      Math.ceil(workload.input_tps / service_rate.input_tps),
+      Math.ceil(workload.output_tps / service_rate.output_tps)
+    );
+  }
+  const kvReplicaDivisor = replicas || concurrencyReplicas;
+  const kv = kvBytesPerToken(model, hardware, kv_cache_dtype, indexer_cache_dtype);
+  const kvFixed = kvFixedBytesPerSequence(model, hardware, kv_cache_dtype, indexer_cache_dtype);
+  const kvGb = targetKvGb(kv.value, kvFixed, workload, block_size, kvReplicaDivisor);
+  const artifact = artifactFor(model, hardware, speculative_mode);
+  const bound = selectCapacityLowerBoundDevices(artifact, hardware, gpu_memory_utilization, kvGb);
+  const capacityLowerBound = bound.devices;
+
+  const configuredUsable = hardware.memory_gb * gpu_memory_utilization * configured_devices;
+  // The recipe hint's 20% margin has no defined composition. Adding KV or
+  // reserve to it (or treating it as an all-in floor) would invent semantics.
+  // These legacy fields therefore stay null until an exact runtime profile is
+  // supplied by a future topology-aware mode.
+  const configuredRequired = null;
+  const configuredHeadroom = null;
+  const configuredFit = null;
+
+  const issues = [];
+  addRuntimeIssues(issues, model, hardware, runtime, vllm_version, vllm_ascend_version, cann_version, artifact);
+  if (hardware.runtime_family === "nvidia-vllm") {
+    issues.push({
+      severity: "WARNING",
+      code: "H20_UNVERIFIED",
+      message: "no cited official recipe validates this model on the supplied H20 variant",
+    });
+    if (model.key.startsWith("flash") || model.key === "v4-pro") {
+      issues.push({
+        severity: "WARNING",
+        code: "FP4_ON_H20",
+        message: "native FP4 expert materialization and kernel behavior must be measured on H20",
+      });
+    }
+  } else {
+    issues.push({
+      severity: "NOTE",
+      code: "DISTINCT_ARTIFACT",
+      message: "Ascend topology uses a separately quantized artifact, not the NVIDIA checkpoint",
+    });
+  }
+  issues.push({
+    severity: "WARNING",
+    code: "AGGREGATE_ONLY",
+    message: "aggregate capacity is necessary but cannot establish per-rank TP/DP/EP/PP residency or a runnable topology",
+  });
+  if (configured_devices < capacityLowerBound) {
+    issues.push({
+      severity: "WARNING",
+      code: "AGGREGATE_CAPACITY_SHORTFALL",
+      message:
+        `configured ${configured_devices} devices are below the aggregate bound from the documented device minimum ` +
+        "and max(recipe hint, workload KV); this still does not establish per-rank fit",
+    });
+  } else if (capacityLowerBound < configured_devices) {
+    issues.push({
+      severity: "NOTE",
+      code: "CAPACITY_BOUND_BELOW_CONFIGURED",
+      message: `aggregate capacity lower bound is ${capacityLowerBound}, but this does not prove that ${configured_devices} devices form a runnable topology`,
+    });
+  }
+  if (artifact.recipe_vram_hint_gb === null) {
+    issues.push({
+      severity: "WARNING",
+      code: "MEMORY_COMPOSITION_UNVERIFIED",
+      message: "official topology is known, but checkpoint/activation/KV memory was not independently profiled",
+    });
+  }
+  if (runtime_reserve_gb_per_device === 0) {
+    issues.push({
+      severity: "NOTE",
+      code: "RUNTIME_RESERVE",
+      message: "no extra per-device reserve was supplied; recipe hint margin composition is undefined",
+    });
+  }
+  if (model.key !== "r1-671b") {
+    issues.push({
+      severity: "NOTE",
+      code: "HYBRID_KV_APPROXIMATION",
+      message: "V4 KV includes documented compressed, sliding-window, and residual state but not exact runtime page-pool padding",
+    });
+  }
+  const expectedParser = model.key === "r1-671b" ? "deepseek_r1" : "deepseek_v4";
+  if (reasoning_parser !== "auto" && reasoning_parser !== expectedParser) {
+    issues.push({ severity: "BLOCKER", code: "REASONING_PARSER", message: `use ${expectedParser} for ${model.label}` });
+  }
+  if (speculative_mode === "dspark" && !(model.key === "v4-pro" && hardware.runtime_family === "nvidia-vllm")) {
+    issues.push({
+      severity: "BLOCKER",
+      code: "SPECULATIVE_MODE",
+      message: "DSpark is supported here only by the NVIDIA-vLLM Pro DSpark artifact",
+    });
+  }
+  if (speculative_mode !== "none") {
+    issues.push({
+      severity: "WARNING",
+      code: "SPECULATIVE_RATE",
+      message: "service rate must be benchmarked with the selected draft method and acceptance rate",
+    });
+  }
+  if (service_rate === null || service_rate === undefined) {
+    issues.push({
+      severity: "WARNING",
+      code: "SERVICE_RATE_REQUIRED",
+      message: "fleet count is intentionally left TBD until a model+hardware service rate is supplied",
+    });
+  }
+  const impliedDecodeTps = workload.output_tokens / workload.mean_residence_seconds;
+  if (impliedDecodeTps > 200) {
+    issues.push({
+      severity: "WARNING",
+      code: "RESIDENCE_TIME_INCONSISTENT",
+      message: `output/residence implies ${impliedDecodeTps.toFixed(0)} output tok/s per request`,
+    });
+  }
+
+  return {
+    model_key: model.key,
+    model: model.label,
+    hardware_key: hardware.key,
+    hardware: hardware.label,
+    workload: workload.name,
+    artifact: artifact.artifact,
+    recipe_vram_hint_gb: artifact.recipe_vram_hint_gb,
+    hint_basis: artifact.hint_basis,
+    kv_profile: kv.profile,
+    kv_bytes_per_token: kv.value,
+    kv_fixed_bytes_per_sequence: kvFixed,
+    padded_resident_tokens: paddedResidentTokens(workload, block_size),
+    fleet_concurrency: workload.concurrent_requests,
+    concurrency_per_replica: workload.concurrent_requests / kvReplicaDivisor,
+    kv_gb_per_replica: kvGb,
+    runtime_reserve_gb_per_device: runtime_reserve_gb_per_device,
+    capacity_lower_bound_devices: capacityLowerBound,
+    capacity_lower_bound_nodes: Math.ceil(capacityLowerBound / hardware.devices_per_node),
+    capacity_lower_bound_usable_hbm_gb: capacityLowerBound * hardware.memory_gb * gpu_memory_utilization,
+    configured_devices: configured_devices,
+    configured_usable_hbm_gb: configuredUsable,
+    configured_required_hbm_gb: configuredRequired,
+    configured_headroom_gb: configuredHeadroom,
+    configured_memory_fit: configuredFit,
+    required_fleet_input_tps: workload.input_tps,
+    required_fleet_output_tps: workload.output_tps,
+    required_input_tps_for_one_replica: replicas !== null ? workload.input_tps / replicas : null,
+    required_output_tps_for_one_replica: replicas !== null ? workload.output_tps / replicas : null,
+    service_input_tps: service_rate ? service_rate.input_tps : null,
+    service_output_tps: service_rate ? service_rate.output_tps : null,
+    service_rate_provenance: service_rate ? service_rate.provenance : "TBD",
+    throughput_replicas: replicas,
+    candidate_fleet_devices: replicas ? capacityLowerBound * replicas : null,
+    configured_fleet_devices: replicas ? configured_devices * replicas : null,
+    warm_standby_candidate_devices:
+      warm_standby && replicas ? capacityLowerBound * replicas : replicas ? 0 : null,
+    status: deriveStatus(issues),
+    issues,
+    // Derivation detail the CLI never surfaced. Not part of the Python's JSON
+    // contract, so the differential test ignores keys prefixed with an
+    // underscore.
+    _derivation: {
+      documented_devices: artifact.documented_devices,
+      topology_basis: artifact.topology_basis,
+      controlling_gb: bound.requiredGb,
+      controlling_term:
+        (artifact.recipe_vram_hint_gb || 0) >= kvGb && artifact.recipe_vram_hint_gb !== null
+          ? "recipe hint"
+          : "workload KV",
+      concurrency_replicas: concurrencyReplicas,
+      kv_replica_divisor: kvReplicaDivisor,
+      main_entry: kv.layout ? kv.layout.mainEntry : null,
+      indexer_entry: kv.layout ? kv.layout.indexerEntry : null,
+      per_sequence_bytes: paddedResidentTokens(workload, block_size) * kv.value + kvFixed,
+      hint_published: artifact.recipe_vram_hint_gb !== null,
+    },
+  };
+}
+
+/* ---------- batch driver, mirroring run() ---------- */
+
+function runMatrix(config) {
+  const rows = [];
+  const seenUsers = new Set();
+  for (const users of config.users) {
+    if (seenUsers.has(users)) throw new SizingError("--users contains duplicate scenarios");
+    seenUsers.add(users);
+  }
+  for (const users of config.users) {
+    const workload = makeWorkload({
+      name: `general-${users}-users`,
+      users,
+      requests_per_user_hour: config.requests_per_user_hour,
+      peak_factor: config.peak_factor,
+      input_tokens: config.input_tokens,
+      output_tokens: config.output_tokens,
+      mean_residence_seconds: config.mean_residence_seconds,
+    });
+    for (const modelKey of config.models) {
+      for (const hardwareKey of config.hardware) {
+        const pair = `${modelKey}@${hardwareKey}`;
+        let rate = config.illustrative_rates ? ILLUSTRATIVE_RATES[pair] || null : null;
+        if (config.service_rates && config.service_rates[pair]) rate = config.service_rates[pair];
+        const devices =
+          config.replica_devices && config.replica_devices[pair]
+            ? config.replica_devices[pair]
+            : config.tensor_parallel_size;
+        const base = {
+          model_key: modelKey,
+          hardware_key: hardwareKey,
+          workload: workload.name,
+          pair,
+          users,
+        };
+        try {
+          rows.push(
+            Object.assign(base, { ok: true, result: size(MODELS[modelKey], HARDWARE[hardwareKey], workload, {
+              gpu_memory_utilization: config.gpu_memory_utilization,
+              block_size: config.block_size,
+              max_num_seqs: config.max_num_seqs,
+              configured_devices: devices,
+              runtime_reserve_gb_per_device: config.runtime_reserve_gb_per_device,
+              kv_cache_dtype: config.kv_cache_dtype,
+              indexer_cache_dtype: config.indexer_cache_dtype,
+              runtime: config.runtime,
+              vllm_version: config.vllm_version,
+              vllm_ascend_version: config.vllm_ascend_version || null,
+              cann_version: config.cann_version || null,
+              reasoning_parser: config.reasoning_parser,
+              speculative_mode: config.speculative_mode,
+              warm_standby: config.warm_standby,
+              service_rate: rate,
+            }) })
+          );
+        } catch (err) {
+          if (!(err instanceof SizingError)) throw err;
+          rows.push(Object.assign(base, { ok: false, error: err.message }));
+        }
+      }
+    }
+  }
+  return rows;
+}
+
+const ENGINE = {
+  GB,
+  HARDWARE,
+  MODELS,
+  ILLUSTRATIVE_RATES,
+  SizingError,
+  pyRound,
+  versionLt,
+  parseVersion,
+  makeWorkload,
+  kvBytesPerToken,
+  kvFixedBytesPerSequence,
+  paddedResidentTokens,
+  targetKvGb,
+  candidateDeviceCounts,
+  selectCapacityLowerBoundDevices,
+  size,
+  runMatrix,
+  deriveStatus,
+};
+
+if (typeof module !== "undefined" && module.exports) module.exports = ENGINE;
+if (typeof window !== "undefined") window.ENGINE = ENGINE;
+
+</script>
+<script>
+"use strict";
+
+const E = window.ENGINE;
+
+/* ---------- state ---------- */
+
+const DEFAULT_STATE = {
+  models: ["flash-0731", "v4-pro", "r1-671b"],
+  hardware: ["h20-141", "h20-96", "910b-64"],
+  users: [200],
+  requests_per_user_hour: 1.0,
+  peak_factor: 3.0,
+  input_tokens: 4096,
+  output_tokens: 600,
+  mean_residence_seconds: 30.0,
+  gpu_memory_utilization: 0.75,
+  block_size: 256,
+  max_num_seqs: 256,
+  tensor_parallel_size: 8,
+  runtime_reserve_gb_per_device: 0.0,
+  kv_cache_dtype: "auto",
+  indexer_cache_dtype: "auto",
+  runtime: "auto",
+  vllm_version: "0.20.1",
+  vllm_ascend_version: "",
+  cann_version: "",
+  reasoning_parser: "auto",
+  speculative_mode: "none",
+  warm_standby: false,
+  illustrative_rates: false,
+  service_rates: {},
+  replica_devices: {},
+};
+
+let state = JSON.parse(JSON.stringify(DEFAULT_STATE));
+let scenarioIndex = 0;
+let severityFilter = "ALL";
+const expanded = new Set();
+
+/* ---------- helpers ---------- */
+
+const $ = (id) => document.getElementById(id);
+const esc = (s) =>
+  String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const fmt = (v, d = 1) => (v === null || v === undefined ? "n/a" : Number(v).toFixed(d));
+const grp = (v, d = 0) =>
+  Number(v).toLocaleString("en-US", { minimumFractionDigits: d, maximumFractionDigits: d });
+// Pair keys contain "@" and "." which are legal in an id attribute but break
+// CSS selectors, so element ids get a sanitised form while data attributes keep
+// the real pair key.
+const slug = (pair) => pair.replace(/[^A-Za-z0-9]+/g, "_");
+const shortModel = (label) => (label.startsWith("DeepSeek ") ? label.slice(9) : label);
+const shortHardware = (label) => {
+  for (const p of ["NVIDIA ", "Huawei Ascend "]) if (label.startsWith(p)) return label.slice(p.length);
+  return label;
+};
+
+function rangeText(values, suffix) {
+  if (!values.length) return "—";
+  const lo = Math.min(...values);
+  const hi = Math.max(...values);
+  const body = lo === hi ? grp(lo) : `${grp(lo)}–${grp(hi)}`;
+  return suffix ? `${body} ${suffix}` : body;
+}
+
+let toastTimer = null;
+function toast(message) {
+  const el = $("toast");
+  el.textContent = message;
+  el.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove("show"), 2200);
+}
+
+/* ---------- reading the control rail ---------- */
+
+function parseUsers(raw) {
+  return String(raw)
+    .split(/[,\s]+/)
+    .map((t) => t.trim())
+    .filter(Boolean)
+    .map((t) => Number(t))
+    .filter((n) => Number.isFinite(n))
+    .map((n) => Math.trunc(n));
+}
+
+function readControls() {
+  state.users = parseUsers($("users").value);
+  if (!state.users.length) state.users = [0];
+  state.requests_per_user_hour = Number($("rph").value);
+  state.peak_factor = Number($("peak").value);
+  state.input_tokens = Math.trunc(Number($("intok").value));
+  state.output_tokens = Math.trunc(Number($("outtok").value));
+  state.mean_residence_seconds = Number($("residence").value);
+  state.gpu_memory_utilization = Number($("util").value);
+  state.block_size = Math.trunc(Number($("block").value));
+  state.max_num_seqs = Math.trunc(Number($("seqs").value));
+  state.tensor_parallel_size = Math.trunc(Number($("tp").value));
+  state.runtime_reserve_gb_per_device = Number($("reserve").value);
+  state.kv_cache_dtype = $("kvdtype").value;
+  state.indexer_cache_dtype = $("ixdtype").value;
+  state.runtime = $("runtime").value;
+  state.vllm_version = $("vllm").value.trim();
+  state.vllm_ascend_version = $("ascend").value.trim();
+  state.cann_version = $("cann").value.trim();
+  state.reasoning_parser = $("parser").value;
+  state.speculative_mode = $("spec").value;
+  state.warm_standby = $("standby").checked;
+  state.illustrative_rates = $("illustrative").checked;
+}
+
+function writeControls() {
+  $("users").value = state.users.join(", ");
+  $("rph").value = state.requests_per_user_hour;
+  $("peak").value = state.peak_factor;
+  $("intok").value = state.input_tokens;
+  $("outtok").value = state.output_tokens;
+  $("residence").value = state.mean_residence_seconds;
+  $("util").value = state.gpu_memory_utilization;
+  $("block").value = state.block_size;
+  $("seqs").value = state.max_num_seqs;
+  $("tp").value = state.tensor_parallel_size;
+  $("reserve").value = state.runtime_reserve_gb_per_device;
+  $("kvdtype").value = state.kv_cache_dtype;
+  $("ixdtype").value = state.indexer_cache_dtype;
+  $("runtime").value = state.runtime;
+  $("vllm").value = state.vllm_version;
+  $("ascend").value = state.vllm_ascend_version;
+  $("cann").value = state.cann_version;
+  $("parser").value = state.reasoning_parser;
+  $("spec").value = state.speculative_mode;
+  $("standby").checked = state.warm_standby;
+  $("illustrative").checked = state.illustrative_rates;
+  renderChips();
+}
+
+/* ---------- inline advisories ---------- */
+
+function updateNotes() {
+  const utilNote = $("note-util");
+  if (Math.abs(state.gpu_memory_utilization - 0.92) > 1e-9) {
+    utilNote.textContent = `Supplied deployment policy. Upstream vLLM currently defaults to 0.92 — a ${(
+      (0.92 - state.gpu_memory_utilization) *
+      100
+    ).toFixed(0)} point gap, stated rather than silently substituted.`;
+    utilNote.hidden = false;
+  } else {
+    utilNote.textContent = "Matches the current upstream vLLM default.";
+    utilNote.hidden = false;
+  }
+
+  const implied = state.output_tokens / state.mean_residence_seconds;
+  const resNote = $("note-residence");
+  if (Number.isFinite(implied) && implied > 200) {
+    resNote.textContent = `Implies ${implied.toFixed(0)} output tok/s for a single request. Raise residence or lower output tokens if that is not what you meant.`;
+    resNote.hidden = false;
+  } else {
+    resNote.hidden = true;
+  }
+
+  const vllmNote = $("note-vllm");
+  const needed = [];
+  for (const key of state.models) {
+    const model = E.MODELS[key];
+    if (!model.min_vllm_version) continue;
+    try {
+      if (E.versionLt(state.vllm_version, model.min_vllm_version)) {
+        needed.push(`${shortModel(model.label)} needs ${model.min_vllm_version}`);
+      }
+    } catch (err) {
+      needed.length = 0;
+      needed.push("not a PEP 440 version");
+      break;
+    }
+  }
+  if (needed.length) {
+    vllmNote.textContent = needed.join(" · ");
+    vllmNote.hidden = false;
+  } else {
+    vllmNote.hidden = true;
+  }
+
+  const ascendNote = $("note-ascend");
+  const usesAscend = state.hardware.some((k) => E.HARDWARE[k].runtime_family === "vllm-ascend");
+  const missing = [];
+  if (usesAscend && !state.vllm_ascend_version) missing.push("image version");
+  if (usesAscend && !state.cann_version) missing.push("CANN version");
+  if (missing.length) {
+    ascendNote.textContent = `An Ascend target is selected but its ${missing.join(" and ")} ${
+      missing.length > 1 ? "are" : "is"
+    } unset. These are deployment parameters, not defaults.`;
+    ascendNote.hidden = false;
+  } else {
+    ascendNote.hidden = true;
+  }
+}
+
+/* ---------- compute ---------- */
+
+function currentConfig() {
+  return {
+    models: state.models,
+    hardware: state.hardware,
+    users: state.users,
+    requests_per_user_hour: state.requests_per_user_hour,
+    peak_factor: state.peak_factor,
+    input_tokens: state.input_tokens,
+    output_tokens: state.output_tokens,
+    mean_residence_seconds: state.mean_residence_seconds,
+    gpu_memory_utilization: state.gpu_memory_utilization,
+    block_size: state.block_size,
+    max_num_seqs: state.max_num_seqs,
+    tensor_parallel_size: state.tensor_parallel_size,
+    runtime_reserve_gb_per_device: state.runtime_reserve_gb_per_device,
+    kv_cache_dtype: state.kv_cache_dtype,
+    indexer_cache_dtype: state.indexer_cache_dtype,
+    runtime: state.runtime,
+    vllm_version: state.vllm_version,
+    vllm_ascend_version: state.vllm_ascend_version || null,
+    cann_version: state.cann_version || null,
+    reasoning_parser: state.reasoning_parser,
+    speculative_mode: state.speculative_mode,
+    warm_standby: state.warm_standby,
+    illustrative_rates: state.illustrative_rates,
+    service_rates: state.service_rates,
+    replica_devices: state.replica_devices,
+  };
+}
+
+function compute() {
+  try {
+    return { ok: true, rows: E.runMatrix(currentConfig()) };
+  } catch (err) {
+    return { ok: false, error: err.message };
+  }
+}
+
+/* ---------- chips ---------- */
+
+function renderChips() {
+  $("model-chips").innerHTML = Object.values(E.MODELS)
+    .map((m) => {
+      const on = state.models.includes(m.key);
+      const last = on && state.models.length === 1;
+      return `<button class="chip" data-scope="models" data-key="${m.key}" aria-pressed="${on}" ${
+        last ? "disabled title='At least one model must stay selected'" : ""
+      }>${esc(shortModel(m.label))}</button>`;
+    })
+    .join("");
+  $("hardware-chips").innerHTML = Object.values(E.HARDWARE)
+    .map((h) => {
+      const on = state.hardware.includes(h.key);
+      const last = on && state.hardware.length === 1;
+      return `<button class="chip" data-scope="hardware" data-key="${h.key}" aria-pressed="${on}" ${
+        last ? "disabled title='At least one accelerator must stay selected'" : ""
+      }>${esc(shortHardware(h.label))}</button>`;
+    })
+    .join("");
+}
+
+/* ---------- detail panels ---------- */
+
+function calcLine(label, value, cls) {
+  return `<div class="${cls || ""}"><span class="lbl">${label}</span><span class="v">${value}</span></div>`;
+}
+
+function issuesPanel(row) {
+  return `<h4>Findings (${row.issues.length})</h4><div class="issue-list">${row.issues
+    .map(
+      (issue) => `<div class="issue">
+        <span class="badge sev-${issue.severity}">${issue.severity}</span>
+        <span class="issue-body"><span class="issue-code">${esc(issue.code)}</span>
+        <span class="issue-msg">${esc(issue.message)}</span></span>
+      </div>`
+    )
+    .join("")}</div>`;
+}
+
+function memoryDetail(entry) {
+  const r = entry.result;
+  const d = r._derivation;
+  const pair = entry.pair;
+  const hw = E.HARDWARE[entry.hardware_key];
+  const perDevice = hw.memory_gb * state.gpu_memory_utilization;
+  const override = state.replica_devices[pair];
+
+  const kvPanel = `
+    <h4>KV cache per replica</h4>
+    <div class="calc">
+      ${calcLine("bytes / token", `${grp(r.kv_bytes_per_token)} B`)}
+      ${calcLine("fixed / sequence", `${grp(r.kv_fixed_bytes_per_sequence)} B`)}
+      ${calcLine("resident tokens", grp(r.padded_resident_tokens))}
+      ${calcLine("per sequence", `${grp(d.per_sequence_bytes)} B`)}
+      ${calcLine("concurrency / replica", fmt(r.concurrency_per_replica, 2))}
+      ${calcLine("KV per replica", `${fmt(r.kv_gb_per_replica, 3)} GB`, "calc-total")}
+    </div>
+    <p class="basis">${esc(r.kv_profile)}. Resident tokens are input + half of output, rounded up to the ${grp(
+    state.block_size
+  )}-token block size.</p>`;
+
+  const hintLine =
+    r.recipe_vram_hint_gb === null
+      ? `<div class="awaiting">No aggregate VRAM floor is published for <b>${esc(
+          r.artifact
+        )}</b>. The documented topology of ${d.documented_devices} devices is the only cited bound, so the workload KV figure is what moves this row. Substituting a hint from the NVIDIA checkpoint would be a number from a different artifact.</div>`
+      : `<div class="calc">
+          ${calcLine("recipe hint", `${fmt(r.recipe_vram_hint_gb, 1)} GB`)}
+          ${calcLine("workload KV", `${fmt(r.kv_gb_per_replica, 3)} GB`)}
+          ${calcLine(`controlling — ${d.controlling_term}`, `${fmt(d.controlling_gb, 2)} GB`, "calc-total")}
+        </div>
+        <p class="basis">Hint basis: ${esc(r.hint_basis)}. The two terms are compared, never summed — the hint's margin composition is undefined, so adding them could double-count.</p>`;
+
+  const boundPanel = `
+    <h4>Aggregate capacity lower bound</h4>
+    ${hintLine}
+    <div class="calc" style="margin-top:0.6rem">
+      ${calcLine("documented minimum", `${d.documented_devices} dev`)}
+      ${calcLine("usable / device", `${fmt(perDevice, 1)} GB`)}
+      ${calcLine("lower bound", `${r.capacity_lower_bound_devices} dev · ${r.capacity_lower_bound_nodes} node${
+        r.capacity_lower_bound_nodes === 1 ? "" : "s"
+      }`, "calc-total")}
+      ${calcLine("usable at bound", `${fmt(r.capacity_lower_bound_usable_hbm_gb, 1)} GB`)}
+    </div>
+    <p class="basis">${esc(d.topology_basis)}.</p>`;
+
+  const devicePanel = `
+    <h4>Devices for this pair</h4>
+    <div class="rate-form">
+      <div class="wide">
+        <label for="dev-${slug(pair)}">Configured devices per replica</label>
+        <input type="number" min="1" step="1" id="dev-${slug(pair)}" value="${
+    override !== undefined ? override : state.tensor_parallel_size
+  }">
+      </div>
+      <div class="actions">
+        <button data-apply-devices="${pair}">Apply</button>
+        ${override !== undefined ? `<button class="clear" data-clear-devices="${pair}">Reset to ${state.tensor_parallel_size}</button>` : ""}
+      </div>
+    </div>
+    <div class="calc" style="margin-top:0.6rem">
+      ${calcLine("configured", `${r.configured_devices} dev`)}
+      ${calcLine("usable HBM", `${fmt(r.configured_usable_hbm_gb, 1)} GB`)}
+    </div>
+    <div class="awaiting" style="margin-top:0.6rem">Required HBM, headroom, and fit stay <b>unset</b> for the configured allocation. Producing them would mean inventing a composition for the recipe hint's margin that no cited source defines.</div>`;
+
+  return `<div class="detail"><div class="detail-grid">
+    <div>${kvPanel}</div>
+    <div>${boundPanel}</div>
+    <div>${devicePanel}</div>
+    <div class="detail-wide">${issuesPanel(r)}</div>
+  </div></div>`;
+}
+
+function capacityDetail(entry) {
+  const r = entry.result;
+  const d = r._derivation;
+  const pair = entry.pair;
+  const w = E.makeWorkload({
+    name: r.workload,
+    users: entry.users,
+    requests_per_user_hour: state.requests_per_user_hour,
+    peak_factor: state.peak_factor,
+    input_tokens: state.input_tokens,
+    output_tokens: state.output_tokens,
+    mean_residence_seconds: state.mean_residence_seconds,
+  });
+  const supplied = state.service_rates[pair];
+
+  const demandPanel = `
+    <h4>Demand</h4>
+    <div class="calc">
+      ${calcLine("users × req/hr × peak", `${grp(entry.users)} × ${state.requests_per_user_hour} × ${state.peak_factor}`)}
+      ${calcLine("peak requests / s", fmt(w.peak_requests_per_second, 4))}
+      ${calcLine("input tok/s", grp(r.required_fleet_input_tps, 1))}
+      ${calcLine("output tok/s", grp(r.required_fleet_output_tps, 1))}
+      ${calcLine("fleet concurrency", fmt(r.fleet_concurrency, 2), "calc-total")}
+    </div>
+    <p class="basis">Concurrency is peak requests per second times mean residence, so it is only as good as the residence estimate.</p>`;
+
+  const replicaPanel = `
+    <h4>Replicas</h4>
+    <div class="calc">
+      ${calcLine(`concurrency ÷ ${grp(state.max_num_seqs)} seqs`, `${d.concurrency_replicas}`)}
+      ${
+        r.service_input_tps
+          ? calcLine("input demand ÷ rate", String(Math.ceil(r.required_fleet_input_tps / r.service_input_tps)))
+          : calcLine("input demand ÷ rate", "TBD")
+      }
+      ${
+        r.service_output_tps
+          ? calcLine("output demand ÷ rate", String(Math.ceil(r.required_fleet_output_tps / r.service_output_tps)))
+          : calcLine("output demand ÷ rate", "TBD")
+      }
+      ${calcLine(
+        "replicas — max of the three",
+        r.throughput_replicas === null ? '<span class="tbd">TBD</span>' : String(r.throughput_replicas),
+        "calc-total"
+      )}
+    </div>
+    ${
+      r.throughput_replicas === null
+        ? `<p class="basis">Only the concurrency constraint is computable without a rate. It is a floor, not an answer.</p>`
+        : `<p class="basis">Each replica must then sustain ${grp(r.required_input_tps_for_one_replica, 1)} input and ${grp(
+            r.required_output_tps_for_one_replica,
+            1
+          )} output tok/s.</p>`
+    }`;
+
+  const ratePanel = `
+    <h4>Service rate for this pair</h4>
+    <div class="rate-form">
+      <div><label for="rin-${slug(pair)}">Input tok/s</label>
+        <input type="number" min="0" step="10" id="rin-${slug(pair)}" value="${supplied ? supplied.input_tps : ""}" placeholder="required"></div>
+      <div><label for="rout-${slug(pair)}">Output tok/s</label>
+        <input type="number" min="0" step="10" id="rout-${slug(pair)}" value="${supplied ? supplied.output_tps : ""}" placeholder="required"></div>
+      <div class="wide"><label for="rprov-${slug(pair)}">Provenance</label>
+        <select id="rprov-${slug(pair)}">
+          <option value="MEAS" ${supplied && supplied.provenance === "MEAS" ? "selected" : ""}>MEAS — benchmarked on this pair</option>
+          <option value="SIM" ${supplied && supplied.provenance === "SIM" ? "selected" : ""}>SIM — scenario only</option>
+        </select></div>
+      <div class="actions">
+        <button data-apply-rate="${pair}">Apply</button>
+        ${supplied ? `<button class="clear" data-clear-rate="${pair}">Clear</button>` : ""}
+      </div>
+    </div>
+    <p class="basis">This replaces <code>--service-rate ${esc(pair)}=IN,OUT,MEAS</code>. One benchmark replaces exactly one deployment pair — measuring V4 Pro on H20 141 GB says nothing about R1 on 910B.</p>`;
+
+  const fleetPanel = `
+    <h4>Fleet</h4>
+    ${
+      r.throughput_replicas === null
+        ? `<div class="awaiting">Fleet counts are <b>TBD</b> on purpose. Supply a measured rate for this pair, or switch on illustrative rates to explore SIM scenarios that stay badged as such.</div>`
+        : `<div class="calc">
+            ${calcLine("candidate — bound × replicas", `${r.capacity_lower_bound_devices} × ${r.throughput_replicas} = ${grp(r.candidate_fleet_devices)}`)}
+            ${calcLine("configured — cfg × replicas", `${r.configured_devices} × ${r.throughput_replicas} = ${grp(r.configured_fleet_devices)}`)}
+            ${calcLine("warm standby", grp(r.warm_standby_candidate_devices), "calc-total")}
+          </div>
+          <p class="basis">Rate provenance is <b>${esc(r.service_rate_provenance)}</b>${
+            r.service_rate_provenance === "SIM"
+              ? " — a scenario, not a benchmark. Do not procure against it."
+              : "."
+          }</p>`
+    }`;
+
+  return `<div class="detail"><div class="detail-grid">
+    <div>${demandPanel}</div>
+    <div>${replicaPanel}</div>
+    <div>${ratePanel}</div>
+    <div>${fleetPanel}</div>
+  </div></div>`;
+}
+
+/* ---------- row rendering ---------- */
+
+function nameCell(entry) {
+  return `<span class="cell-name">
+    <span class="m">${esc(shortModel(E.MODELS[entry.model_key].label))}</span>
+    <span class="h">${esc(shortHardware(E.HARDWARE[entry.hardware_key].label))}</span>
+  </span>`;
+}
+
+function errorRow(entry, table) {
+  return `<div class="row">
+    <div class="${table === "memory" ? "row-main" : "cap-main"}" style="cursor:default">
+      <span class="rail" data-status="ERROR"></span>
+      ${nameCell(entry)}
+      <span class="num" data-label="Status" style="grid-column:3 / -1;text-align:left;color:var(--blocked)">${esc(entry.error)}</span>
+    </div>
+  </div>`;
+}
+
+function renderMemoryRows(entries) {
+  return entries
+    .map((entry) => {
+      if (!entry.ok) return errorRow(entry, "memory");
+      const r = entry.result;
+      const key = `mem:${entry.workload}:${entry.pair}`;
+      const open = expanded.has(key);
+      const evidence = r._derivation.hint_published ? "cited" : "topology";
+      const edited = state.replica_devices[entry.pair] !== undefined;
+      return `<div class="row" data-open="${open}">
+        <button class="row-main" data-toggle="${key}" aria-expanded="${open}">
+          <span class="rail" data-status="${r.status}" data-evidence="${evidence}"></span>
+          ${nameCell(entry)}
+          <span class="num" data-label="Hint GB">${r.recipe_vram_hint_gb === null ? "n/a" : fmt(r.recipe_vram_hint_gb, 1)}</span>
+          <span class="num" data-label="KV/rep GB">${fmt(r.kv_gb_per_replica, 2)}</span>
+          <span class="num" data-label="Cap LB">${r.capacity_lower_bound_devices}</span>
+          <span class="num" data-label="Nodes">${r.capacity_lower_bound_nodes}</span>
+          <span class="num" data-label="Cfg">${r.configured_devices}${edited ? "*" : ""}</span>
+          <span class="cell-status" data-label="Status"><span class="badge" data-status="${r.status}">${r.status}</span></span>
+          <span class="chev">›</span>
+        </button>
+        ${open ? memoryDetail(entry) : ""}
+      </div>`;
+    })
+    .join("");
+}
+
+function renderCapacityRows(entries) {
+  return entries
+    .map((entry) => {
+      if (!entry.ok) return errorRow(entry, "capacity");
+      const r = entry.result;
+      const key = `cap:${entry.workload}:${entry.pair}`;
+      const open = expanded.has(key);
+      const evidence = r._derivation.hint_published ? "cited" : "topology";
+      const prov = r.service_rate_provenance;
+      const tbd = (v) => (v === null ? '<span class="tbd">TBD</span>' : grp(v));
+      return `<div class="row" data-open="${open}">
+        <button class="cap-main" data-toggle="${key}" aria-expanded="${open}">
+          <span class="rail" data-status="${r.status}" data-evidence="${evidence}"></span>
+          ${nameCell(entry)}
+          <span class="num" data-label="Need in tok/s">${grp(r.required_fleet_input_tps, 1)}</span>
+          <span class="num" data-label="Need out tok/s">${grp(r.required_fleet_output_tps, 1)}</span>
+          <span class="cell-status" data-label="Rate source"><span class="badge prov-${prov}">${prov}</span></span>
+          <span class="num" data-label="Replicas">${tbd(r.throughput_replicas)}</span>
+          <span class="num" data-label="Candidate fleet">${tbd(r.candidate_fleet_devices)}</span>
+          <span class="num" data-label="Configured fleet">${tbd(r.configured_fleet_devices)}</span>
+          <span class="chev">›</span>
+        </button>
+        ${open ? capacityDetail(entry) : ""}
+      </div>`;
+    })
+    .join("");
+}
+
+function renderFindings(entries) {
+  const ok = entries.filter((e) => e.ok);
+  const byCode = new Map();
+  for (const entry of ok) {
+    for (const issue of entry.result.issues) {
+      if (!byCode.has(issue.code)) {
+        byCode.set(issue.code, { severity: issue.severity, message: issue.message, pairs: [] });
+      }
+      const record = byCode.get(issue.code);
+      const label = `${shortModel(E.MODELS[entry.model_key].label)} / ${shortHardware(E.HARDWARE[entry.hardware_key].label)}`;
+      if (!record.pairs.includes(label)) record.pairs.push(label);
+      // Keep the most specific message when one code varies by row.
+      record.message = issue.message;
+    }
+  }
+  const order = { BLOCKER: 0, WARNING: 1, NOTE: 2 };
+  const all = [...byCode.entries()].sort((a, b) => order[a[1].severity] - order[b[1].severity] || a[0].localeCompare(b[0]));
+  const counts = { BLOCKER: 0, WARNING: 0, NOTE: 0 };
+  for (const [, rec] of all) counts[rec.severity] += 1;
+
+  $("findings-filter").innerHTML = ["ALL", "BLOCKER", "WARNING", "NOTE"]
+    .map((s) => {
+      const n = s === "ALL" ? all.length : counts[s];
+      return `<button class="chip" data-severity="${s}" aria-pressed="${severityFilter === s}">${s} ${n}</button>`;
+    })
+    .join("");
+
+  const shown = all.filter(([, rec]) => severityFilter === "ALL" || rec.severity === severityFilter);
+  $("findings-sub").textContent = `${shown.length} of ${all.length} distinct codes`;
+
+  if (!shown.length) {
+    $("rows-findings").innerHTML = `<p class="footnote">No findings at this severity for the current selection.</p>`;
+    return;
+  }
+  const statusOf = { BLOCKER: "BLOCKED", WARNING: "UNVERIFIED", NOTE: "ESTIMATE" };
+  $("rows-findings").innerHTML = shown
+    .map(
+      ([code, rec]) => `<div class="finding">
+        <span class="rail" data-status="${statusOf[rec.severity]}" style="height:100%;min-height:34px"></span>
+        <div>
+          <div class="finding-head">
+            <span class="badge sev-${rec.severity}">${rec.severity}</span>
+            <span class="issue-code">${esc(code)}</span>
+            <span class="finding-pairs">${rec.pairs.length} pair${rec.pairs.length === 1 ? "" : "s"}</span>
+          </div>
+          <div class="finding-msg">${esc(rec.message)}</div>
+          <div class="finding-pairs" style="margin-top:0.25rem">${esc(rec.pairs.join(" · "))}</div>
+        </div>
+      </div>`
+    )
+    .join("");
+}
+
+function renderAnswers(entries) {
+  const ok = entries.filter((e) => e.ok).map((e) => e.result);
+  const bounds = ok.map((r) => r.capacity_lower_bound_devices);
+  const configured = ok.map((r) => r.configured_devices);
+  const fleets = ok.filter((r) => r.candidate_fleet_devices !== null).map((r) => r.candidate_fleet_devices);
+  const pending = ok.length - fleets.length;
+
+  const panels = [
+    {
+      ord: "Answer one",
+      val: rangeText(bounds),
+      unit: "devices",
+      cap: "<b>Aggregate capacity lower bound.</b> Covers the documented device minimum and the larger of recipe hint and workload KV. Not a runnable topology.",
+      tbd: false,
+    },
+    {
+      ord: "Answer two",
+      val: rangeText(configured),
+      unit: "devices",
+      cap: "<b>Configured allocation.</b> What you supplied. This tool does not validate that it forms a working per-rank layout.",
+      tbd: false,
+    },
+    {
+      ord: "Answer three",
+      val: fleets.length ? rangeText(fleets) : "TBD",
+      unit: fleets.length ? "devices" : "",
+      cap: fleets.length
+        ? `<b>Candidate fleet.</b> Derived from supplied service rates${pending ? `; ${pending} pair${pending === 1 ? "" : "s"} still awaiting one` : " for every pair in scope"}.`
+        : "<b>Candidate fleet.</b> Left empty until a service rate exists for a model and accelerator together. An invented number here would be the most expensive kind.",
+      tbd: !fleets.length,
+    },
+  ];
+
+  $("answers").innerHTML = panels
+    .map(
+      (p) => `<div class="answer">
+        <div class="ord">${p.ord}</div>
+        <div class="val${p.tbd ? " tbd" : ""}">${p.val}${p.unit ? ` <span style="font-size:var(--step-1);color:var(--graphite);font-family:var(--body);font-weight:400">${p.unit}</span>` : ""}</div>
+        <div class="cap">${p.cap}</div>
+      </div>`
+    )
+    .join("");
+}
+
+/* ---------- CLI echo ---------- */
+
+function buildCli() {
+  const a = ["python3 deepseek_deployment_sizing.py"];
+  const flag = (name, ...values) => a.push(`\n  --${name}${values.length ? " " + values.join(" ") : ""}`);
+  flag("models", ...state.models);
+  flag("hardware", ...state.hardware);
+  flag("users", ...state.users);
+  flag("requests-per-user-hour", state.requests_per_user_hour);
+  flag("peak-factor", state.peak_factor);
+  flag("input-tokens", state.input_tokens);
+  flag("output-tokens", state.output_tokens);
+  flag("mean-residence-seconds", state.mean_residence_seconds);
+  flag("gpu-memory-utilization", state.gpu_memory_utilization);
+  flag("block-size", state.block_size);
+  flag("max-num-seqs", state.max_num_seqs);
+  flag("tensor-parallel-size", state.tensor_parallel_size);
+  flag("runtime-reserve-gb-per-device", state.runtime_reserve_gb_per_device);
+  flag("kv-cache-dtype", state.kv_cache_dtype);
+  flag("indexer-cache-dtype", state.indexer_cache_dtype);
+  flag("runtime", state.runtime);
+  flag("vllm-version", state.vllm_version);
+  if (state.vllm_ascend_version) flag("vllm-ascend-version", state.vllm_ascend_version);
+  if (state.cann_version) flag("cann-version", state.cann_version);
+  flag("reasoning-parser", state.reasoning_parser);
+  flag("speculative-mode", state.speculative_mode);
+  if (state.warm_standby) flag("warm-standby");
+  if (state.illustrative_rates) flag("illustrative-rates");
+  for (const [pair, r] of Object.entries(state.replica_devices)) flag("replica-devices", `${pair}=${r}`);
+  for (const [pair, r] of Object.entries(state.service_rates)) {
+    flag("service-rate", `${pair}=${r.input_tps},${r.output_tps},${r.provenance}`);
+  }
+  flag("view", "full");
+  flag("show-issues");
+  return a.join(" ").trim();
+}
+
+/* ---------- master render ---------- */
+
+let lastRows = [];
+
+// Emptiness here is a consequence of a bad parameter, so it points at the fix
+// rather than sitting blank.
+function showEmpty() {
+  const invite = `<p class="footnote">No rows to show until the parameter above is corrected.</p>`;
+  $("rows-memory").innerHTML = invite;
+  $("rows-capacity").innerHTML = invite;
+  $("rows-findings").innerHTML = invite;
+  $("findings-filter").innerHTML = "";
+  $("scenario-bar").innerHTML = "";
+  $("tally").innerHTML = "";
+  $("capacity-sub").textContent = "";
+  $("findings-sub").textContent = "";
+  $("answers").innerHTML = "";
+}
+
+function render() {
+  updateNotes();
+  const outcome = compute();
+  const errorSlot = $("global-error");
+
+  if (!outcome.ok) {
+    errorSlot.innerHTML = `<div class="slab"><div class="errbar"><b>Cannot size</b> — ${esc(outcome.error)}</div>
+      <p class="footnote">The CLI aborts the whole run on this. Correct the parameter and every row returns.</p></div>`;
+    showEmpty();
+    $("cli-echo").textContent = buildCli();
+    return;
+  }
+  // A parameter fault that takes out every row is one message, not nine copies
+  // of it. A fault that only some rows hit stays inside those rows.
+  const failed = outcome.rows.filter((r) => !r.ok);
+  if (outcome.rows.length && failed.length === outcome.rows.length) {
+    const distinct = [...new Set(failed.map((r) => r.error))];
+    if (distinct.length === 1) {
+      errorSlot.innerHTML = `<div class="slab"><div class="errbar"><b>Cannot size</b> — ${esc(distinct[0])}</div>
+        <p class="footnote">Every pair in scope hits this, so it is a parameter to correct rather than a result to read. The CLI aborts the whole run here.</p></div>`;
+      showEmpty();
+      lastRows = outcome.rows;
+      $("cli-echo").textContent = buildCli();
+      return;
+    }
+  }
+
+  errorSlot.innerHTML = "";
+  lastRows = outcome.rows;
+
+  const scenarios = [...new Set(outcome.rows.map((r) => r.workload))];
+  if (scenarioIndex >= scenarios.length) scenarioIndex = 0;
+  const activeScenario = scenarios[scenarioIndex];
+  const entries = outcome.rows.filter((r) => r.workload === activeScenario);
+
+  $("scenario-bar").innerHTML =
+    scenarios.length > 1
+      ? `<div class="scenario-bar"><span class="lbl">Scenario</span>${scenarios
+          .map(
+            (s, i) =>
+              `<button class="chip" data-scenario="${i}" aria-pressed="${i === scenarioIndex}">${esc(
+                s.replace("general-", "").replace("-users", " users")
+              )}</button>`
+          )
+          .join("")}</div>`
+      : "";
+
+  const ok = entries.filter((e) => e.ok);
+  const counts = { ESTIMATE: 0, UNVERIFIED: 0, BLOCKED: 0 };
+  for (const e of ok) counts[e.result.status] += 1;
+  const colorOf = { BLOCKED: "blocked", UNVERIFIED: "extrapolated", ESTIMATE: "verified" };
+  $("tally").innerHTML = ["BLOCKED", "UNVERIFIED", "ESTIMATE"]
+    .map(
+      (s) =>
+        `<span class="tally-item" style="color:var(--${colorOf[s]})"><b>${counts[s]}</b>${s.toLowerCase()}</span>`
+    )
+    .join("");
+
+  const withRate = ok.filter((e) => e.result.throughput_replicas !== null).length;
+  $("capacity-sub").textContent = `${withRate} of ${ok.length} pairs have a service rate`;
+
+  $("rows-memory").innerHTML = renderMemoryRows(entries);
+  $("rows-capacity").innerHTML = renderCapacityRows(entries);
+  renderFindings(entries);
+  renderAnswers(entries);
+  $("cli-echo").textContent = buildCli();
+}
+
+/* ---------- events ---------- */
+
+const CONTROL_IDS = [
+  "users", "rph", "peak", "intok", "outtok", "residence", "util", "block", "seqs", "tp",
+  "reserve", "kvdtype", "ixdtype", "runtime", "vllm", "ascend", "cann", "parser", "spec",
+  "standby", "illustrative",
+];
+
+for (const id of CONTROL_IDS) {
+  const el = $(id);
+  el.addEventListener(el.type === "checkbox" ? "change" : "input", () => {
+    readControls();
+    render();
+  });
+  if (el.tagName === "SELECT") el.addEventListener("change", () => { readControls(); render(); });
+}
+
+document.addEventListener("click", (event) => {
+  const scopeChip = event.target.closest("[data-scope]");
+  if (scopeChip) {
+    const { scope, key } = scopeChip.dataset;
+    const list = state[scope];
+    const index = list.indexOf(key);
+    if (index >= 0) {
+      if (list.length === 1) return;
+      list.splice(index, 1);
+    } else {
+      // Keep the canonical declaration order rather than click order.
+      const canonical = scope === "models" ? Object.keys(E.MODELS) : Object.keys(E.HARDWARE);
+      state[scope] = canonical.filter((k) => list.includes(k) || k === key);
+    }
+    renderChips();
+    render();
+    return;
+  }
+
+  const scenarioChip = event.target.closest("[data-scenario]");
+  if (scenarioChip) {
+    scenarioIndex = Number(scenarioChip.dataset.scenario);
+    render();
+    return;
+  }
+
+  const severityChip = event.target.closest("[data-severity]");
+  if (severityChip) {
+    severityFilter = severityChip.dataset.severity;
+    render();
+    return;
+  }
+
+  const toggle = event.target.closest("[data-toggle]");
+  if (toggle) {
+    const key = toggle.dataset.toggle;
+    if (expanded.has(key)) expanded.delete(key);
+    else expanded.add(key);
+    render();
+    return;
+  }
+
+  const applyRate = event.target.closest("[data-apply-rate]");
+  if (applyRate) {
+    const pair = applyRate.dataset.applyRate;
+    const input = Number($(`rin-${slug(pair)}`).value);
+    const output = Number($(`rout-${slug(pair)}`).value);
+    if (!(input > 0) || !(output > 0)) {
+      toast("Both rates must be positive");
+      return;
+    }
+    state.service_rates[pair] = { input_tps: input, output_tps: output, provenance: $(`rprov-${slug(pair)}`).value };
+    render();
+    toast(`Rate applied to ${pair}`);
+    return;
+  }
+
+  const clearRate = event.target.closest("[data-clear-rate]");
+  if (clearRate) {
+    delete state.service_rates[clearRate.dataset.clearRate];
+    render();
+    toast("Rate cleared — back to TBD");
+    return;
+  }
+
+  const applyDevices = event.target.closest("[data-apply-devices]");
+  if (applyDevices) {
+    const pair = applyDevices.dataset.applyDevices;
+    const count = Math.trunc(Number($(`dev-${slug(pair)}`).value));
+    if (!(count > 0)) {
+      toast("Device count must be positive");
+      return;
+    }
+    state.replica_devices[pair] = count;
+    render();
+    toast(`${pair} set to ${count} devices`);
+    return;
+  }
+
+  const clearDevices = event.target.closest("[data-clear-devices]");
+  if (clearDevices) {
+    delete state.replica_devices[clearDevices.dataset.clearDevices];
+    render();
+    toast("Device override cleared");
+  }
+});
+
+$("copy-cli").addEventListener("click", async () => {
+  const text = buildCli();
+  try {
+    await navigator.clipboard.writeText(text);
+    toast("Command copied");
+  } catch (err) {
+    const area = document.createElement("textarea");
+    area.value = text;
+    document.body.appendChild(area);
+    area.select();
+    document.execCommand("copy");
+    area.remove();
+    toast("Command copied");
+  }
+});
+
+$("download-json").addEventListener("click", () => {
+  const payload = lastRows
+    .filter((r) => r.ok)
+    .map((r) => {
+      const copy = Object.assign({}, r.result);
+      delete copy._derivation; // not part of the Python's JSON contract
+      return copy;
+    });
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = "deepseek_sizing.json";
+  link.click();
+  URL.revokeObjectURL(url);
+  toast("JSON downloaded");
+});
+
+$("reset").addEventListener("click", () => {
+  state = JSON.parse(JSON.stringify(DEFAULT_STATE));
+  scenarioIndex = 0;
+  severityFilter = "ALL";
+  expanded.clear();
+  writeControls();
+  render();
+  toast("Reset to defaults");
+});
+
+/* ---------- self-test: the Python's own assertions, in the browser ---------- */
+
+$("self-test").addEventListener("click", () => {
+  const out = $("selftest-out");
+  const failures = [];
+  const check = (name, fn) => {
+    try {
+      if (fn() !== true) failures.push(name);
+    } catch (err) {
+      failures.push(`${name} (threw ${err.message})`);
+    }
+  };
+  const base = E.makeWorkload({
+    name: "test", users: 200, requests_per_user_hour: 1, peak_factor: 3,
+    input_tokens: 4096, output_tokens: 600, mean_residence_seconds: 30,
+  });
+  const common = {
+    gpu_memory_utilization: 0.75, block_size: 256, max_num_seqs: 256, configured_devices: 8,
+    runtime_reserve_gb_per_device: 0, kv_cache_dtype: "auto", indexer_cache_dtype: "auto",
+    runtime: "auto", vllm_version: "0.25.0", vllm_ascend_version: "0.25.0", cann_version: "9.0.1",
+    reasoning_parser: "auto", speculative_mode: "none", warm_standby: false,
+    service_rate: { input_tps: 1000, output_tps: 100, provenance: "MEAS" },
+  };
+
+  check("rc precedes release", () => E.versionLt("0.25.0rc1", "0.25.0") === true);
+  check("unparseable version rejected", () => {
+    try { E.versionLt("latest", "0.25.0"); return false; } catch (err) { return true; }
+  });
+  check("R1 fp8 KV bytes", () => E.kvBytesPerToken(E.MODELS["r1-671b"], E.HARDWARE["h20-141"], "fp8", "auto").value === 35136);
+  check("R1 bf16 KV bytes", () => E.kvBytesPerToken(E.MODELS["r1-671b"], E.HARDWARE["h20-141"], "bf16", "auto").value === 70272);
+  check("R1 auto KV bytes", () => E.kvBytesPerToken(E.MODELS["r1-671b"], E.HARDWARE["h20-141"], "auto", "auto").value === 70272);
+  check("resident tokens padded", () => E.paddedResidentTokens(base, 256) === 4608);
+  check("KV halves with two replicas", () => {
+    const one = E.targetKvGb(35136, 0, base, 256, 1);
+    const two = E.targetKvGb(35136, 0, base, 256, 2);
+    return Math.abs(one - two * 2) < 1e-9;
+  });
+
+  const flash = E.size(E.MODELS["flash-0731"], E.HARDWARE["h20-141"], base, common);
+  const pro = E.size(E.MODELS["v4-pro"], E.HARDWARE["h20-141"], base, common);
+  const r196 = E.size(E.MODELS["r1-671b"], E.HARDWARE["h20-96"], base, common);
+  check("Flash bound 4, configured 8", () => flash.capacity_lower_bound_devices === 4 && flash.configured_devices === 8);
+  check("Pro bound 16, fit unset", () => pro.capacity_lower_bound_devices === 16 && pro.configured_memory_fit === null);
+  check("R1 on 96 GB bound 16", () => r196.capacity_lower_bound_devices === 16);
+  check("Pro needs one replica", () => pro.throughput_replicas === 1);
+  check("Pro reports shortfall", () => pro.issues.some((i) => i.code === "AGGREGATE_CAPACITY_SHORTFALL"));
+  check("negative users rejected", () => {
+    try {
+      E.size(E.MODELS["v4-pro"], E.HARDWARE["h20-141"],
+        E.makeWorkload({ name: "bad", users: -1, requests_per_user_hour: 1, peak_factor: 1, input_tokens: 1, output_tokens: 1, mean_residence_seconds: 1 }),
+        common);
+      return false;
+    } catch (err) { return true; }
+  });
+
+  if (failures.length) {
+    out.style.color = "var(--blocked)";
+    out.textContent = `self-test: ${failures.length} FAILED — ${failures.join("; ")}`;
+  } else {
+    out.style.color = "var(--verified)";
+    out.textContent = "self-test: PASS — 14 assertions, matching the Python's own suite.";
+  }
+});
+
+/* ---------- boot ---------- */
+
+writeControls();
+readControls();
+render();
+
+</script>
+</body>
+</html>

@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Interactive DeepSeek GPU and NPU HBM sizing console for one model instance.">
+<title>DeepSeek HBM Sizing Console</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --substrate:#eef1f5;
+  --card:#fff;
+  --ink:#16202e;
+  --graphite:#5a6878;
+  --muted:#7c8997;
+  --rule:#c8d0da;
+  --rule-soft:#dde3ea;
+  --verified:#0f6e5c;
+  --verified-wash:#e4f0ec;
+  --simulated:#b26a00;
+  --simulated-wash:#f7eedf;
+  --blocked:#a6303e;
+  --blocked-wash:#f7e6e8;
+  --blue:#315f91;
+  --display:"Space Grotesk","Helvetica Neue",Arial,sans-serif;
+  --body:"IBM Plex Sans","Segoe UI",system-ui,sans-serif;
+  --mono:"IBM Plex Mono","SFMono-Regular",Consolas,monospace;
+}
+* { box-sizing:border-box; }
+html { scroll-behavior:smooth; }
+body { margin:0; background:var(--substrate); color:var(--ink); font:14px/1.55 var(--body); -webkit-font-smoothing:antialiased; }
+button,input,select { font:inherit; color:inherit; }
+button { cursor:pointer; }
+a { color:var(--verified); text-underline-offset:2px; }
+:focus-visible { outline:2px solid var(--ink); outline-offset:2px; border-radius:2px; }
+.mono { font-family:var(--mono); font-variant-numeric:tabular-nums; }
+.masthead { background:var(--card); border-bottom:1px solid var(--rule); }
+.masthead-inner { max-width:1500px; margin:auto; padding:32px 24px 22px; }
+.kicker { font:600 12px/1.2 var(--mono); letter-spacing:.16em; text-transform:uppercase; color:var(--graphite); margin-bottom:10px; }
+.title-line { display:flex; gap:24px; justify-content:space-between; align-items:flex-start; }
+h1,h2,h3,h4 { margin:0; font-family:var(--display); letter-spacing:-.025em; line-height:1.15; }
+h1 { max-width:19ch; font-size:clamp(36px,5vw,64px); }
+h1 em { color:var(--verified); font-style:normal; }
+.subtitle { color:var(--graphite); font-size:16px; max-width:67ch; margin:14px 0 0; }
+.status-chip { display:inline-flex; align-items:center; gap:8px; flex:none; border:1px solid #b8d2c9; background:var(--verified-wash); color:var(--verified); padding:7px 10px; border-radius:999px; font:600 11px/1 var(--mono); letter-spacing:.08em; text-transform:uppercase; }
+.status-chip::before { content:""; width:7px; height:7px; border-radius:50%; background:currentColor; }
+.legend { display:flex; flex-wrap:wrap; gap:10px 26px; margin-top:24px; padding-top:16px; border-top:1px solid var(--rule-soft); color:var(--graphite); font-size:12px; }
+.legend-item { display:flex; align-items:center; gap:8px; }
+.legend-swatch { width:5px; height:24px; border-radius:1px; }
+.legend-swatch.hatch { color:var(--graphite); background:repeating-linear-gradient(135deg,currentColor 0 3px,transparent 3px 6px); }
+.app { max-width:1500px; margin:auto; padding:24px; display:grid; grid-template-columns:320px minmax(0,1fr); gap:24px; align-items:start; }
+.controls { position:sticky; top:16px; max-height:calc(100vh - 32px); overflow:auto; background:var(--card); border:1px solid var(--rule); border-radius:4px; }
+.controls-head { padding:16px 18px; border-bottom:1px solid var(--rule-soft); display:flex; justify-content:space-between; align-items:center; }
+.controls-head h2 { font-size:20px; }
+.reset-link { border:0; background:none; color:var(--graphite); padding:4px; font:500 11px var(--mono); text-transform:uppercase; letter-spacing:.08em; }
+.reset-link:hover { color:var(--blocked); }
+.control-group { padding:16px 18px; border-bottom:1px solid var(--rule-soft); }
+.control-group:last-child { border-bottom:0; }
+.control-group h3 { margin:0 0 12px; font:600 11px/1.2 var(--mono); letter-spacing:.13em; text-transform:uppercase; color:var(--graphite); }
+.field { margin-bottom:12px; }
+.field:last-child { margin-bottom:0; }
+.field-row { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.field label,.label { display:block; margin-bottom:5px; color:var(--graphite); font-size:12px; }
+.field input,.field select { width:100%; border:1px solid var(--rule); border-radius:3px; background:var(--substrate); padding:8px 9px; font:12px var(--mono); }
+.field input:hover,.field select:hover { border-color:#9eabb9; }
+.field input:focus,.field select:focus { background:var(--card); }
+.help { margin:6px 0 0; color:var(--muted); font-size:11px; line-height:1.45; }
+.help.warn { color:var(--simulated); }
+.choice-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+.check-card { position:relative; display:block; }
+.check-card input { position:absolute; opacity:0; pointer-events:none; }
+.check-card span { min-height:54px; display:flex; flex-direction:column; justify-content:center; border:1px solid var(--rule); border-radius:3px; padding:8px 10px; background:var(--card); transition:.15s ease; }
+.check-card b { font:600 12px var(--body); }
+.check-card small { color:var(--graphite); font:10px var(--mono); margin-top:2px; }
+.check-card input:checked + span { border-color:var(--verified); box-shadow:inset 4px 0 0 var(--verified); background:var(--verified-wash); }
+.check-card input:focus-visible + span { outline:2px solid var(--ink); outline-offset:2px; }
+.radio-row { display:flex; padding:3px; gap:3px; border:1px solid var(--rule); background:var(--substrate); border-radius:4px; }
+.radio-row label { flex:1; position:relative; }
+.radio-row input { position:absolute; opacity:0; }
+.radio-row span { display:block; text-align:center; padding:6px; border-radius:2px; color:var(--graphite); font:600 11px var(--mono); }
+.radio-row input:checked + span { background:var(--card); color:var(--ink); box-shadow:0 1px 2px #16202e1f; }
+.advanced { border-top:1px solid var(--rule-soft); }
+.advanced summary { list-style:none; padding:13px 18px; cursor:pointer; color:var(--graphite); font:600 11px var(--mono); letter-spacing:.1em; text-transform:uppercase; }
+.advanced summary::-webkit-details-marker { display:none; }
+.advanced summary::after { content:"+"; float:right; font-size:16px; line-height:10px; }
+.advanced[open] summary::after { content:"−"; }
+.advanced-body { padding:2px 18px 17px; }
+.results { min-width:0; display:flex; flex-direction:column; gap:18px; }
+.error { display:none; background:var(--blocked-wash); border:1px solid #e2b8bd; color:var(--blocked); padding:12px 14px; border-radius:4px; font:12px/1.5 var(--mono); }
+.error.visible { display:block; }
+.summary-strip { display:grid; grid-template-columns:repeat(4,1fr); background:var(--ink); color:#fff; border-radius:4px; overflow:hidden; }
+.summary-stat { min-width:0; padding:17px 18px; border-right:1px solid #ffffff28; }
+.summary-stat:last-child { border:0; }
+.summary-stat span { display:block; color:#c4ccd5; font:10px var(--mono); text-transform:uppercase; letter-spacing:.1em; }
+.summary-stat strong { display:block; margin-top:6px; font:600 22px var(--display); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.summary-stat small { display:block; color:#aeb8c3; margin-top:2px; font-size:11px; }
+.tabbar { display:flex; gap:18px; border-bottom:1px solid var(--rule); }
+.tabbar button { border:0; border-bottom:3px solid transparent; background:none; padding:10px 2px 9px; color:var(--graphite); font:600 12px var(--mono); letter-spacing:.04em; }
+.tabbar button[aria-selected="true"] { color:var(--ink); border-color:var(--verified); }
+.panel[hidden] { display:none; }
+.slab { background:var(--card); border:1px solid var(--rule); border-radius:4px; overflow:hidden; }
+.slab + .slab { margin-top:18px; }
+.slab-head { display:flex; justify-content:space-between; align-items:baseline; gap:14px; padding:15px 18px; border-bottom:1px solid var(--rule-soft); }
+.slab-head h2 { font-size:21px; }
+.slab-head .sub { color:var(--graphite); font:11px var(--mono); }
+.grid-head,.model-main { display:grid; grid-template-columns:6px minmax(180px,1.5fr) 106px 96px 95px 102px 24px; gap:12px; align-items:center; }
+.grid-head { background:var(--substrate); color:var(--graphite); padding:8px 18px; border-bottom:1px solid var(--rule-soft); font:10px var(--mono); letter-spacing:.08em; text-transform:uppercase; }
+.row { border-bottom:1px solid var(--rule-soft); }
+.row:last-child { border-bottom:0; }
+.model-main { width:100%; border:0; background:none; padding:13px 18px; text-align:left; }
+.model-main:hover { background:#f7f9fb; }
+.rail { align-self:stretch; min-height:38px; width:6px; border-radius:1px; background:var(--simulated); }
+.rail.verified { background:var(--verified); }
+.rail.blocked { background:var(--blocked); }
+.rail.hatched { color:var(--graphite); background:repeating-linear-gradient(135deg,currentColor 0 3px,transparent 3px 6px); }
+.name { min-width:0; }
+.name b { display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-weight:600; }
+.name small { display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:var(--graphite); font:10px var(--mono); margin-top:2px; }
+.num { text-align:right; font:12px var(--mono); font-variant-numeric:tabular-nums; }
+.num.big { font-size:15px; font-weight:600; }
+.positive { color:var(--verified); }
+.negative { color:var(--blocked); }
+.badge { display:inline-block; border-radius:2px; padding:3px 6px; background:var(--simulated-wash); color:var(--simulated); font:600 9px var(--mono); letter-spacing:.08em; text-transform:uppercase; white-space:nowrap; }
+.badge.verified { background:var(--verified-wash); color:var(--verified); }
+.badge.blocked { background:var(--blocked-wash); color:var(--blocked); }
+.badge.neutral { background:var(--substrate); color:var(--graphite); }
+.chev { justify-self:end; color:var(--graphite); font:18px var(--mono); transition:transform .18s; }
+.row.open .chev { transform:rotate(90deg); }
+.detail { background:var(--substrate); border-top:1px solid var(--rule-soft); padding:18px; }
+.detail-grid { display:grid; grid-template-columns:1.1fr 1fr; gap:18px; }
+.detail-card { background:var(--card); border:1px solid var(--rule-soft); border-radius:3px; padding:14px; min-width:0; }
+.detail-card h3 { margin-bottom:11px; color:var(--graphite); font:600 10px var(--mono); letter-spacing:.1em; text-transform:uppercase; }
+.calc-line { display:flex; justify-content:space-between; gap:12px; padding:4px 0; font:11px var(--mono); }
+.calc-line span:first-child { color:var(--graphite); }
+.calc-line.total { border-top:1px solid var(--rule); margin-top:5px; padding-top:8px; font-weight:600; }
+.stack { display:flex; height:13px; overflow:hidden; border-radius:2px; background:var(--rule-soft); margin:5px 0 12px; }
+.stack span { min-width:1px; height:100%; }
+.stack-legend { display:grid; grid-template-columns:1fr 1fr; gap:5px 12px; color:var(--graphite); font-size:10px; }
+.stack-legend i { display:inline-block; width:7px; height:7px; margin-right:5px; }
+.basis { color:var(--graphite); font-size:11px; line-height:1.5; margin:10px 0 0; }
+.override-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
+.override-grid label { color:var(--graphite); font-size:10px; }
+.override-grid input { width:100%; margin-top:4px; padding:7px; border:1px solid var(--rule); background:var(--substrate); border-radius:3px; font:11px var(--mono); }
+.override-actions { display:flex; gap:7px; margin-top:10px; }
+.small-btn { border:1px solid var(--rule); background:var(--card); border-radius:3px; padding:6px 9px; font:600 10px var(--mono); }
+.small-btn.primary { background:var(--ink); border-color:var(--ink); color:#fff; }
+.small-btn:hover { border-color:var(--verified); }
+.components { display:grid; grid-template-columns:minmax(190px,1.3fr) repeat(7,minmax(74px,1fr)); align-items:center; gap:10px; padding:11px 18px; border-bottom:1px solid var(--rule-soft); }
+.components:last-child { border:0; }
+.components.head { background:var(--substrate); color:var(--graphite); padding-top:8px; padding-bottom:8px; font:9px var(--mono); text-transform:uppercase; letter-spacing:.07em; }
+.hardware-head,.hardware-row { display:grid; grid-template-columns:6px minmax(180px,1.4fr) minmax(165px,1.2fr) 92px 84px 88px 110px; gap:11px; align-items:center; }
+.hardware-head { background:var(--substrate); color:var(--graphite); padding:8px 18px; border-bottom:1px solid var(--rule-soft); font:9px var(--mono); text-transform:uppercase; letter-spacing:.07em; }
+.hardware-row { padding:12px 18px; border-bottom:1px solid var(--rule-soft); }
+.hardware-row:last-child { border:0; }
+.callout { padding:13px 16px; border-top:1px solid var(--rule-soft); background:var(--substrate); color:var(--graphite); font-size:11px; }
+.callout b { color:var(--ink); }
+.evidence-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; padding:16px; }
+.evidence-card { border:1px solid var(--rule-soft); padding:14px; border-radius:3px; }
+.evidence-card h3 { font-size:16px; }
+.evidence-card p { margin:7px 0 10px; color:var(--graphite); font-size:11px; }
+.source-list { list-style:none; padding:0; margin:0; }
+.source-list li { padding:7px 0; border-top:1px dotted var(--rule); font-size:11px; }
+.source-list a { display:block; overflow-wrap:anywhere; }
+.actions { display:flex; justify-content:flex-end; gap:8px; }
+.action-btn { border:1px solid var(--rule); background:var(--card); border-radius:3px; padding:8px 11px; font:600 10px var(--mono); text-transform:uppercase; letter-spacing:.06em; }
+.action-btn:hover { border-color:var(--verified); color:var(--verified); }
+.footer { max-width:1500px; margin:auto; padding:0 24px 40px; color:var(--graphite); font-size:11px; }
+.footer p { margin:0; max-width:100ch; }
+.sr-only { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
+.toast { position:fixed; right:20px; bottom:20px; padding:10px 13px; color:#fff; background:var(--ink); border-radius:3px; font:11px var(--mono); box-shadow:0 8px 28px #16202e33; transform:translateY(20px); opacity:0; pointer-events:none; transition:.2s ease; }
+.toast.show { transform:none; opacity:1; }
+@media(max-width:1100px) {
+  .app { grid-template-columns:1fr; }
+  .controls { position:static; max-height:none; }
+  .controls-body { display:grid; grid-template-columns:repeat(3,1fr); }
+  .control-group { border-right:1px solid var(--rule-soft); }
+  .advanced { grid-column:1/-1; }
+  .summary-strip { grid-template-columns:1fr 1fr; }
+  .summary-stat:nth-child(2) { border-right:0; }
+  .summary-stat:nth-child(-n+2) { border-bottom:1px solid #ffffff28; }
+  .evidence-grid { grid-template-columns:1fr; }
+}
+@media(max-width:780px) {
+  .masthead-inner,.app { padding-left:14px; padding-right:14px; }
+  .title-line { display:block; }
+  .status-chip { margin-top:16px; }
+  .controls-body { display:block; }
+  .control-group { border-right:0; }
+  .grid-head { display:none; }
+  .model-main { grid-template-columns:6px minmax(130px,1fr) 88px 24px; }
+  .model-main > :nth-child(4),.model-main > :nth-child(5),.model-main > :nth-child(6) { display:none; }
+  .model-main .scenario::before { content:"Scenario\A"; white-space:pre; color:var(--graphite); font:9px var(--mono); }
+  .detail-grid { grid-template-columns:1fr; }
+  .override-grid { grid-template-columns:1fr; }
+  .components { grid-template-columns:1fr 1fr; }
+  .components.head { display:none; }
+  .components > span:not(:first-child)::before { content:attr(data-label); display:block; color:var(--graphite); font:9px var(--mono); text-transform:uppercase; }
+  .components > :first-child { grid-column:1/-1; }
+  .hardware-head { display:none; }
+  .hardware-row { grid-template-columns:6px 1fr 1fr; }
+  .hardware-row > :nth-child(n+4) { display:none; }
+  .summary-stat strong { font-size:18px; }
+}
+@media(max-width:480px) {
+  h1 { font-size:36px; }
+  .summary-strip { grid-template-columns:1fr; }
+  .summary-stat { border-right:0; border-bottom:1px solid #ffffff28; }
+  .choice-grid,.field-row { grid-template-columns:1fr; }
+  .tabbar { overflow:auto; }
+}
+@media(prefers-reduced-motion:reduce) { * { scroll-behavior:auto!important; transition:none!important; } }
+@media print {
+  .controls,.tabbar,.actions,.toast { display:none!important; }
+  body { background:#fff; }
+  .app { display:block; max-width:none; padding:12px; }
+  .panel[hidden] { display:block; }
+  .results { gap:12px; }
+  .masthead-inner { padding:18px 12px; }
+}
+</style>
+</head>
+<body>
+<header class="masthead">
+  <div class="masthead-inner">
+    <div class="kicker">Deployment planning · one model instance · decimal GB</div>
+    <div class="title-line">
+      <div>
+        <h1>Know what fits <em>before</em> you reserve the rack.</h1>
+        <p class="subtitle">Explore resident model tensors, runtime workspace, KV cache, communication buffers, and reserve for three DeepSeek checkpoints. Every result separates cited facts from simulated planning assumptions.</p>
+      </div>
+      <div class="status-chip">Live calculation</div>
+    </div>
+    <div class="legend" aria-label="Evidence legend">
+      <span class="legend-item"><i class="legend-swatch" style="background:var(--verified)"></i>Cited or derived checkpoint data</span>
+      <span class="legend-item"><i class="legend-swatch" style="background:var(--simulated)"></i>Mixed result with simulated terms</span>
+      <span class="legend-item"><i class="legend-swatch" style="background:var(--blocked)"></i>Input or evidence blocker</span>
+      <span class="legend-item"><i class="legend-swatch hatch"></i>Documented topology; artifact memory unknown</span>
+    </div>
+  </div>
+</header>
+
+<div class="app">
+  <aside class="controls" aria-label="Sizing parameters">
+    <div class="controls-head"><h2>Scenario</h2><button class="reset-link" id="resetTop" type="button">Reset all</button></div>
+    <div class="controls-body">
+      <section class="control-group">
+        <h3>01 · Models</h3>
+        <div class="choice-grid" id="modelChoices"></div>
+      </section>
+      <section class="control-group">
+        <h3>02 · Resident token envelope</h3>
+        <div class="field-row">
+          <div class="field"><label for="sequences">Concurrent sequences</label><input id="sequences" type="number" min="1" step="1" value="256"></div>
+          <div class="field"><label for="residentTokens">Avg. resident tokens</label><input id="residentTokens" type="number" min="1" step="256" value="4096"></div>
+        </div>
+        <div class="field"><label for="blockSize">Cache block size</label><select id="blockSize"><option>16</option><option>32</option><option>64</option><option>128</option><option selected>256</option><option>512</option></select></div>
+        <p class="help" id="envelopeHelp">1,048,576 rounded resident tokens across the instance.</p>
+      </section>
+      <section class="control-group">
+        <h3>03 · Runtime policy</h3>
+        <div class="field"><label for="utilization">GPU memory utilization</label><input id="utilization" type="number" min="0.01" max="0.99" step="0.01" value="0.75"><p class="help warn">Affects hardware conversion, not scenario HBM.</p></div>
+        <div class="field"><span class="label">FP4 expert residency</span><div class="radio-row">
+          <label><input type="radio" name="fp4" value="0.5" checked><span>0.5 B</span></label>
+          <label><input type="radio" name="fp4" value="1"><span>1 B</span></label>
+          <label><input type="radio" name="fp4" value="2"><span>2 B</span></label>
+        </div><p class="help">Packed FP4 by default; wider values simulate materialized copies.</p></div>
+        <div class="field"><label for="r1Dtype">R1 KV cache dtype</label><select id="r1Dtype"><option value="auto">auto → BF16</option><option value="fp8">FP8</option><option value="bf16">BF16</option></select></div>
+      </section>
+      <details class="advanced">
+        <summary>Advanced assumptions</summary>
+        <div class="advanced-body">
+          <div class="field"><span class="label">Workspace model</span><div class="radio-row">
+            <label><input type="radio" name="workspaceMode" value="batched_tokens" checked><span>Tokens</span></label>
+            <label><input type="radio" name="workspaceMode" value="weights"><span>Weights</span></label>
+          </div></div>
+          <div class="field"><label for="batchedTokens">Max batched tokens</label><input id="batchedTokens" type="number" min="1" step="256" value="16384"></div>
+          <div class="field"><label for="workspaceCoeff">Workspace bytes / batched token <span class="mono">(blank = per-model back-fit)</span></label><input id="workspaceCoeff" type="number" min="0" step="1000" placeholder="Per-model default"></div>
+          <div class="field-row">
+            <div class="field"><label for="workspaceFraction">Workspace fraction</label><input id="workspaceFraction" type="number" min="0" max="0.99" step="0.01" value="0.03"></div>
+            <div class="field"><label for="graphFraction">Graph / comm fraction</label><input id="graphFraction" type="number" min="0" max="0.99" step="0.01" value="0.02"></div>
+          </div>
+          <div class="field"><label for="reserveFraction">Safety reserve fraction</label><input id="reserveFraction" type="number" min="0" max="0.99" step="0.01" value="0.10"></div>
+          <div class="field"><label for="indexerBytes">V4 indexer bytes / entry</label><input id="indexerBytes" type="number" min="0" step="8" value="256"></div>
+          <div class="field"><span class="label">Aggregate parallelism policy</span><div class="radio-row">
+            <label><input type="radio" name="parallelism" value="tp" checked><span>TP</span></label>
+            <label><input type="radio" name="parallelism" value="dp"><span>DP</span></label>
+          </div></div>
+          <div class="field"><label for="dpSize">Data parallel size</label><input id="dpSize" type="number" min="1" step="1" value="1"></div>
+        </div>
+      </details>
+      <section class="control-group">
+        <h3>04 · Hardware</h3>
+        <div class="choice-grid" id="hardwareChoices"></div>
+      </section>
+    </div>
+  </aside>
+
+  <main class="results">
+    <div class="error" id="error" role="alert"></div>
+    <section class="summary-strip" aria-label="Scenario summary">
+      <div class="summary-stat"><span>Largest scenario</span><strong id="largestScenario">—</strong><small id="largestModel">—</small></div>
+      <div class="summary-stat"><span>Resident envelope</span><strong id="roundedTokens">—</strong><small>rounded tokens</small></div>
+      <div class="summary-stat"><span>Selected scope</span><strong id="scopeCount">—</strong><small>model × hardware pairs</small></div>
+      <div class="summary-stat"><span>Evidence posture</span><strong>Mixed</strong><small>runtime terms require profiling</small></div>
+    </section>
+
+    <nav class="tabbar" role="tablist" aria-label="Results views">
+      <button type="button" role="tab" aria-selected="true" aria-controls="summaryPanel" id="summaryTab" data-tab="summaryPanel">Overview</button>
+      <button type="button" role="tab" aria-selected="false" aria-controls="componentsPanel" id="componentsTab" data-tab="componentsPanel">Components</button>
+      <button type="button" role="tab" aria-selected="false" aria-controls="hardwarePanel" id="hardwareTab" data-tab="hardwarePanel">Hardware</button>
+      <button type="button" role="tab" aria-selected="false" aria-controls="evidencePanel" id="evidenceTab" data-tab="evidencePanel">Evidence</button>
+    </nav>
+
+    <section class="panel" id="summaryPanel" role="tabpanel" aria-labelledby="summaryTab">
+      <div class="slab">
+        <div class="slab-head"><h2>HBM scenario by model</h2><span class="sub">Select a row to inspect the arithmetic</span></div>
+        <div class="grid-head" aria-hidden="true"><span></span><span>Model / checkpoint</span><span class="num">Disk GB</span><span class="num">Scenario GB</span><span class="num">Recipe hint</span><span class="num">vs. hint</span><span></span></div>
+        <div id="modelRows"></div>
+        <div class="callout"><b>Scenario HBM is an aggregate memory envelope, not a per-rank topology proof.</b> User demand, throughput, and replicas are intentionally excluded. Decimal GB are used throughout.</div>
+      </div>
+      <div class="actions"><button class="action-btn" id="printBtn" type="button">Print report</button><button class="action-btn" id="exportBtn" type="button">Export JSON</button></div>
+    </section>
+
+    <section class="panel" id="componentsPanel" role="tabpanel" aria-labelledby="componentsTab" hidden>
+      <div class="slab">
+        <div class="slab-head"><h2>Component breakdown</h2><span class="sub">decimal GB</span></div>
+        <div class="components head"><span>Model</span><span class="num">Weights</span><span class="num">Quant meta</span><span class="num">Workspace</span><span class="num">KV cache</span><span class="num">Graph / comm</span><span class="num">Reserve</span><span class="num">Total</span></div>
+        <div id="componentRows"></div>
+      </div>
+    </section>
+
+    <section class="panel" id="hardwarePanel" role="tabpanel" aria-labelledby="hardwareTab" hidden>
+      <div class="slab">
+        <div class="slab-head"><h2>Hardware conversion</h2><span class="sub" id="hardwareSub">aggregate lower bounds</span></div>
+        <div class="hardware-head"><span></span><span>Model</span><span>Hardware / artifact</span><span class="num">Usable / device</span><span class="num">Capacity LB</span><span class="num">Allocated</span><span class="num">Headroom</span></div>
+        <div id="hardwareRows"></div>
+        <div class="callout">H20 rows are <b>unverified aggregate-capacity scenarios</b>; they do not prove TP/DP/EP/PP rank residency. Ascend rows retain the official documented topology because the separate W8A8/W4A8 artifacts have no published dtype census.</div>
+      </div>
+    </section>
+
+    <section class="panel" id="evidencePanel" role="tabpanel" aria-labelledby="evidenceTab" hidden>
+      <div class="slab">
+        <div class="slab-head"><h2>Evidence &amp; decision boundaries</h2><span class="sub">source-of-truth map</span></div>
+        <div class="evidence-grid">
+          <article class="evidence-card"><h3>Cited / derived</h3><p>Checkpoint size, dtype census, context limits, hardware memory, recipe hints, and cache layouts trace to primary sources.</p><ul class="source-list">
+            <li><a href="https://huggingface.co/deepseek-ai/DeepSeek-V4-Flash-0731" target="_blank" rel="noreferrer">DeepSeek V4 Flash checkpoint</a></li>
+            <li><a href="https://huggingface.co/deepseek-ai/DeepSeek-V4-Pro" target="_blank" rel="noreferrer">DeepSeek V4 Pro checkpoint</a></li>
+            <li><a href="https://huggingface.co/deepseek-ai/DeepSeek-R1" target="_blank" rel="noreferrer">DeepSeek R1 checkpoint</a></li>
+          </ul></article>
+          <article class="evidence-card"><h3>Simulated</h3><p>Workspace, graph/communication buffers, safety reserve, and expanded FP4 residency cannot be known before profiling the exact deployment.</p><ul class="source-list">
+            <li>Workspace default: back-fitted continuity coefficient</li>
+            <li>Graph / comm default: fraction of checkpoint disk GB</li>
+            <li>Reserve default: fraction of pre-reserve components</li>
+          </ul></article>
+          <article class="evidence-card"><h3>Runtime references</h3><p>vLLM recipes establish deployment context and cache layout. Recipe VRAM is shown only as a comparison, never added to the scenario.</p><ul class="source-list">
+            <li><a href="https://github.com/vllm-project/recipes" target="_blank" rel="noreferrer">vLLM model recipes</a></li>
+            <li><a href="https://docs.vllm.ai/en/latest/configuration/engine_args/" target="_blank" rel="noreferrer">vLLM engine arguments</a></li>
+            <li><a href="https://docs.vllm.ai/projects/ascend/en/main/tutorials/models/DeepSeek-V4-Flash.html" target="_blank" rel="noreferrer">vLLM Ascend deployment guide</a></li>
+          </ul></article>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<footer class="footer"><p>This planning interface is a browser implementation of <span class="mono">deepseek_gpu_hbm_calculator.py</span>. Replace simulated terms with measured values before production approval. The original Python remains the authoritative implementation for automated workflows.</p></footer>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+"use strict";
+const GB = 1_000_000_000;
+const DTYPE_BYTES = {BF16:2,I64:8,F32:4,FP8:1,FP4:.5};
+const MODELS = {
+  "flash-0731": {
+    key:"flash-0731", label:"DeepSeek V4 Flash 0731", short:"V4 Flash", checkpoint:"deepseek-ai/DeepSeek-V4-Flash-0731", revision:"7872f01b…6062",
+    census:{BF16:1483567488,I64:2327040,F32:37741630,FP8:6304038912,FP4:296352743424}, totalBytes:166878536440, metadataDtypes:[], expertDtype:"FP4",
+    recipe:200, context:1048576, kvKind:"v4", c4:21, c128:20, swa:2, ascendNodes:1, ascendArtifact:"vllm-ascend/DeepSeek-V4-Flash-0731-w8a8", ascendUtil:.90
+  },
+  "v4-pro": {
+    key:"v4-pro", label:"DeepSeek V4 Pro", short:"V4 Pro", checkpoint:"deepseek-ai/DeepSeek-V4-Pro", revision:"b5968e91…7c1",
+    census:{BF16:2816899328,I64:2327040,F32:87776414,FP8:23169335296,FP4:1572763336704}, totalBytes:864704792696, metadataDtypes:[], expertDtype:"FP4",
+    recipe:960, context:1048576, kvKind:"v4", c4:30, c128:31, swa:0, ascendNodes:4, ascendArtifact:"vllm-ascend/DeepSeek-V4-Pro-w4a8-mtp", ascendUtil:.90
+  },
+  "r1-671b": {
+    key:"r1-671b", label:"DeepSeek R1 671B", short:"R1 671B", checkpoint:"deepseek-ai/DeepSeek-R1", revision:"56d4cbbb…5ad",
+    census:{BF16:3918786560,FP8:680571043840,F32:41555600}, totalBytes:null, metadataDtypes:["F32"], expertDtype:null,
+    recipe:805, context:163840, kvKind:"r1_mla", mlaLayers:61, ascendNodes:2, ascendArtifact:"vllm-ascend/DeepSeek-R1-W8A8", ascendUtil:.92
+  }
+};
+const HARDWARE = {
+  "h20-141":{key:"h20-141",label:"NVIDIA H20 141 GB",short:"H20 141",memory:141,devicesPerNode:8,platform:"nvidia"},
+  "h20-96":{key:"h20-96",label:"NVIDIA H20 96 GB",short:"H20 96",memory:96,devicesPerNode:8,platform:"nvidia"},
+  "910b-64":{key:"910b-64",label:"Huawei Ascend 910B 64 GB",short:"910B 64",memory:64,devicesPerNode:8,platform:"ascend"}
+};
+const DEFAULTS = {
+  models:new Set(Object.keys(MODELS)), hardware:new Set(Object.keys(HARDWARE)), sequences:256,residentTokens:4096,blockSize:256,indexerBytes:256,r1Dtype:"auto",utilization:.75,
+  batchedTokens:16384,workspaceMode:"batched_tokens",workspaceCoeff:null,workspaceFraction:.03,graphFraction:.02,reserveFraction:.10,fp4:.5,parallelism:"tp",dpSize:1
+};
+let state = cloneDefaults();
+let expanded = new Set();
+let overrides = Object.fromEntries(Object.keys(MODELS).map(k=>[k,{workspace:null,graph:null,reserve:null}]));
+let latest = {results:[],hardware:[]};
+const $ = id => document.getElementById(id);
+const fmt = (v,d=1) => v == null ? "unknown" : Number(v).toLocaleString("en-US",{minimumFractionDigits:d,maximumFractionDigits:d});
+const fmtCompact = v => new Intl.NumberFormat("en-US",{notation:"compact",maximumFractionDigits:2}).format(v);
+const esc = s => String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]));
+
+function cloneDefaults(){ return {...DEFAULTS,models:new Set(DEFAULTS.models),hardware:new Set(DEFAULTS.hardware)}; }
+function artifact(model){
+  let payload=0, explicitMeta=0;
+  Object.entries(model.census).forEach(([dtype,count])=>{
+    const bytes=count*DTYPE_BYTES[dtype];
+    model.metadataDtypes.includes(dtype) ? explicitMeta+=bytes : payload+=bytes;
+  });
+  const metadata=model.totalBytes==null ? explicitMeta : model.totalBytes-payload;
+  return {payload,metadata,disk:model.totalBytes==null?payload+metadata:model.totalBytes};
+}
+function readNumber(id){ const raw=$(id).value.trim(); return raw===""?null:Number(raw); }
+function readState(){
+  state.sequences=readNumber("sequences"); state.residentTokens=readNumber("residentTokens"); state.blockSize=readNumber("blockSize");
+  state.indexerBytes=readNumber("indexerBytes"); state.r1Dtype=$("r1Dtype").value; state.utilization=readNumber("utilization");
+  state.batchedTokens=readNumber("batchedTokens"); state.workspaceCoeff=readNumber("workspaceCoeff"); state.workspaceFraction=readNumber("workspaceFraction");
+  state.graphFraction=readNumber("graphFraction"); state.reserveFraction=readNumber("reserveFraction"); state.dpSize=readNumber("dpSize");
+  state.fp4=Number(document.querySelector('input[name="fp4"]:checked').value);
+  state.workspaceMode=document.querySelector('input[name="workspaceMode"]:checked').value;
+  state.parallelism=document.querySelector('input[name="parallelism"]:checked').value;
+}
+function validate(){
+  if(!state.models.size) throw Error("Select at least one model.");
+  if(!state.hardware.size) throw Error("Select at least one hardware target.");
+  [["Concurrent sequences",state.sequences],["Average resident tokens",state.residentTokens],["Block size",state.blockSize],["Max batched tokens",state.batchedTokens],["Data parallel size",state.dpSize]].forEach(([n,v])=>{if(!Number.isFinite(v)||v<=0)throw Error(`${n} must be positive.`)});
+  if(!Number.isFinite(state.indexerBytes)||state.indexerBytes<0) throw Error("Indexer bytes per entry must be non-negative.");
+  [["GPU memory utilization",state.utilization,false],["Workspace fraction",state.workspaceFraction,true],["Graph / communication fraction",state.graphFraction,true],["Safety reserve fraction",state.reserveFraction,true]].forEach(([n,v,zero])=>{
+    if(!Number.isFinite(v)||(zero?v<0:v<=0)||v>=1) throw Error(`${n} must be ${zero?"at least 0":"greater than 0"} and less than 1.`);
+  });
+  if(state.workspaceCoeff!=null&&(!Number.isFinite(state.workspaceCoeff)||state.workspaceCoeff<0)) throw Error("Workspace bytes per batched token must be non-negative.");
+  if(state.parallelism==="dp"&&state.dpSize>1) throw Error("Exact DP residency is blocked: the published dtype census does not separate expert and dense tensor names. Use DP size 1 or return to TP.");
+  state.models.forEach(k=>{if(state.residentTokens>MODELS[k].context)throw Error(`${MODELS[k].label}: average resident tokens exceed the ${fmt(MODELS[k].context,0)} token context limit.`)});
+}
+function kvCache(model){
+  const tokens=Math.ceil(state.residentTokens/state.blockSize)*state.blockSize;
+  if(model.kvKind==="r1_mla"){
+    const dtype=state.r1Dtype==="auto"?"bf16":state.r1Dtype;
+    const bpe=dtype==="fp8"?1:2;
+    return state.sequences*tokens*model.mlaLayers*(512+64)*bpe/GB;
+  }
+  const main=584, c4entries=Math.ceil(tokens/4), c128entries=Math.ceil(tokens/128);
+  const dynamic=model.c4*c4entries*(main+state.indexerBytes)+model.c128*c128entries*main;
+  const fixed=model.c4*(128*main+8*state.indexerBytes)+model.c128*128*main+model.swa*128*main;
+  return state.sequences*(dynamic+fixed)/GB;
+}
+function resident(model,a){
+  let dense=0,expert=0;
+  Object.entries(model.census).forEach(([dtype,count])=>{
+    if(model.metadataDtypes.includes(dtype))return;
+    if(dtype===model.expertDtype)expert+=count*state.fp4; else dense+=count*DTYPE_BYTES[dtype];
+  });
+  const dp=state.parallelism==="dp"?state.dpSize:1;
+  const metadata=model.expertDtype==="FP4"&&state.fp4>.5?0:a.metadata;
+  let storage="cited checkpoint widths";
+  if(model.expertDtype==="FP4") storage=state.fp4===.5?"packed FP4":state.fp4===1?"simulated materialized FP8":"simulated materialized BF16";
+  return {weights:(dense*dp+expert)/GB,metadata:metadata/GB,policy:`hopper; ${storage}; dense replication ×${dp}`};
+}
+function sizeModel(model){
+  const a=artifact(model), r=resident(model,a), disk=a.disk/GB;
+  let workspace,basis,coefficient=null;
+  if(overrides[model.key].workspace!=null){ workspace=overrides[model.key].workspace; basis="explicit per-model GB override"; }
+  else if(state.workspaceMode==="weights"){ workspace=disk*state.workspaceFraction; basis="legacy simulated fraction of checkpoint disk GB"; }
+  else {
+    coefficient=state.workspaceCoeff==null?(state.workspaceFraction===0?0:disk*.03*GB/16384):state.workspaceCoeff;
+    workspace=coefficient*state.batchedTokens/GB;
+    basis=state.workspaceCoeff==null?"simulated back-fitted bytes per batched token":"explicit simulated bytes per batched token";
+  }
+  const kv=kvCache(model);
+  const graph=overrides[model.key].graph??disk*state.graphFraction;
+  const pre=r.weights+r.metadata+workspace+kv+graph;
+  const reserve=overrides[model.key].reserve??pre*state.reserveFraction;
+  const total=pre+reserve;
+  const delta=(total-model.recipe)/model.recipe*100;
+  return {key:model.key,model:model.label,checkpoint:model.checkpoint,checkpointDiskGb:disk,weights:r.weights,metadata:r.metadata,workspace,kv,graph,reserve,total,recipe:model.recipe,delta,policy:r.policy,basis,coefficient,evidence:"mixed: checkpoint/KV cited or derived; workspace and reserves simulated"};
+}
+function sizeHardware(model,result,hardware){
+  if(hardware.platform==="ascend"){
+    const devices=model.ascendNodes*hardware.devicesPerNode;
+    return {model:model.label,modelKey:model.key,hardware:hardware.label,hardwareKey:hardware.key,scenario:null,utilization:model.ascendUtil,usable:null,capacity:null,devices,nodes:model.ascendNodes,raw:model.ascendNodes*hardware.memory*hardware.devicesPerNode,budget:null,headroom:null,perRank:null,artifact:model.ascendArtifact,status:"DOCUMENTED TOPOLOGY",hatched:true};
+  }
+  const usable=hardware.memory*state.utilization, capacity=Math.ceil(result.total/usable), nodes=Math.max(1,Math.ceil(capacity/hardware.devicesPerNode)), devices=nodes*hardware.devicesPerNode, raw=nodes*hardware.memory*hardware.devicesPerNode, budget=raw*state.utilization;
+  return {model:model.label,modelKey:model.key,hardware:hardware.label,hardwareKey:hardware.key,scenario:result.total,utilization:state.utilization,usable,capacity,devices,nodes,raw,budget,headroom:budget-result.total,perRank:result.total/devices,artifact:model.checkpoint,status:"UNVERIFIED",hatched:false};
+}
+function calculate(){
+  readState(); validate();
+  const results=[...state.models].map(k=>sizeModel(MODELS[k]));
+  const hardware=results.flatMap(r=>[...state.hardware].map(h=>sizeHardware(MODELS[r.key],r,HARDWARE[h])));
+  return {results,hardware};
+}
+function stackHtml(r){
+  const parts=[["Weights",r.weights,"#315f91"],["Metadata",r.metadata,"#6c8dae"],["Workspace",r.workspace,"#b26a00"],["KV cache",r.kv,"#8b5f9f"],["Graph / comm",r.graph,"#c28c38"],["Reserve",r.reserve,"#0f6e5c"]];
+  return `<div class="stack" aria-label="HBM component proportions">${parts.map(([n,v,c])=>`<span title="${n}: ${fmt(v)} GB" style="width:${v/r.total*100}%;background:${c}"></span>`).join("")}</div><div class="stack-legend">${parts.map(([n,v,c])=>`<span><i style="background:${c}"></i>${n} · ${fmt(v)} GB</span>`).join("")}</div>`;
+}
+function detailHtml(r){
+  const ov=overrides[r.key];
+  return `<div class="detail"><div class="detail-grid">
+    <section class="detail-card"><h3>Scenario composition</h3>${stackHtml(r)}<div class="calc-line total"><span>Scenario HBM</span><b>${fmt(r.total)} GB</b></div><p class="basis">${esc(r.policy)}. Recipe hint is a comparison only and is not combined with the component sum.</p></section>
+    <section class="detail-card"><h3>Inspect the arithmetic</h3>
+      <div class="calc-line"><span>Resident model weights</span><b>${fmt(r.weights)} GB</b></div><div class="calc-line"><span>Quantization metadata</span><b>+ ${fmt(r.metadata)} GB</b></div><div class="calc-line"><span>Runtime workspace</span><b>+ ${fmt(r.workspace)} GB</b></div><div class="calc-line"><span>KV cache</span><b>+ ${fmt(r.kv)} GB</b></div><div class="calc-line"><span>Graph / communication</span><b>+ ${fmt(r.graph)} GB</b></div><div class="calc-line"><span>Fragmentation / reserve</span><b>+ ${fmt(r.reserve)} GB</b></div><div class="calc-line total"><span>Component total</span><b>${fmt(r.total)} GB</b></div>
+      <p class="basis">Workspace: ${esc(r.basis)}${r.coefficient==null?"":` (${fmt(r.coefficient,0)} B / batched token)`}.</p>
+    </section>
+    <section class="detail-card" style="grid-column:1/-1"><h3>Replace simulated terms for ${esc(MODELS[r.key].short)}</h3><div class="override-grid">
+      <label>Runtime workspace GB<input id="ov-workspace-${r.key}" type="number" min="0" step="0.1" value="${ov.workspace??""}" placeholder="${fmt(r.workspace)} default"></label>
+      <label>Graph / comm GB<input id="ov-graph-${r.key}" type="number" min="0" step="0.1" value="${ov.graph??""}" placeholder="${fmt(r.graph)} default"></label>
+      <label>Safety reserve GB<input id="ov-reserve-${r.key}" type="number" min="0" step="0.1" value="${ov.reserve??""}" placeholder="${fmt(r.reserve)} default"></label>
+    </div><div class="override-actions"><button class="small-btn primary" data-apply="${r.key}" type="button">Apply overrides</button><button class="small-btn" data-clear="${r.key}" type="button">Clear</button></div><p class="basis">Blank fields retain the current simulated default. Explicit values are kept only in this browser session and are marked in the exported assumptions.</p></section>
+  </div></div>`;
+}
+function renderResults(){
+  const {results,hardware}=latest;
+  const largest=results.reduce((a,b)=>a.total>b.total?a:b);
+  const roundedPer=Math.ceil(state.residentTokens/state.blockSize)*state.blockSize, roundedTotal=state.sequences*roundedPer;
+  $("largestScenario").textContent=`${fmt(largest.total)} GB`; $("largestModel").textContent=largest.model; $("roundedTokens").textContent=fmtCompact(roundedTotal); $("scopeCount").textContent=hardware.length;
+  $("envelopeHelp").textContent=`${fmt(roundedTotal,0)} rounded resident tokens across the instance.`;
+  $("modelRows").innerHTML=results.map(r=>{
+    const open=expanded.has(r.key), deltaClass=r.delta<0?"positive":"negative", deltaText=`${r.delta>=0?"+":""}${fmt(r.delta)}%`;
+    return `<article class="row ${open?"open":""}"><button class="model-main" type="button" data-toggle="${r.key}" aria-expanded="${open}"><span class="rail" title="Mixed evidence"></span><span class="name"><b>${esc(r.model)}</b><small>${esc(r.checkpoint)}</small></span><span class="num">${fmt(r.checkpointDiskGb)}</span><span class="num big scenario">${fmt(r.total)}</span><span class="num">${fmt(r.recipe)}</span><span class="num ${deltaClass}">${deltaText}</span><span class="chev" aria-hidden="true">›</span></button>${open?detailHtml(r):""}</article>`;
+  }).join("");
+  $("componentRows").innerHTML=results.map(r=>`<div class="components"><span class="name"><b>${esc(r.model)}</b><small>${esc(r.checkpoint)}</small></span><span class="num" data-label="Weights">${fmt(r.weights)}</span><span class="num" data-label="Quant meta">${fmt(r.metadata)}</span><span class="num" data-label="Workspace">${fmt(r.workspace)}</span><span class="num" data-label="KV cache">${fmt(r.kv)}</span><span class="num" data-label="Graph / comm">${fmt(r.graph)}</span><span class="num" data-label="Reserve">${fmt(r.reserve)}</span><span class="num big" data-label="Total">${fmt(r.total)}</span></div>`).join("");
+  $("hardwareSub").textContent=`${hardware.length} model × hardware comparisons`;
+  $("hardwareRows").innerHTML=hardware.map(h=>`<div class="hardware-row"><span class="rail ${h.hatched?"hatched":""}"></span><span class="name"><b>${esc(h.model)}</b><small><span class="badge ${h.hatched?"neutral":""}">${h.status}</span></small></span><span class="name"><b>${esc(h.hardware)}</b><small>${esc(h.artifact)}</small></span><span class="num">${h.usable==null?"unknown":fmt(h.usable)+" GB"}</span><span class="num">${h.capacity??"unknown"}</span><span class="num">${h.devices} · ${h.nodes} node${h.nodes===1?"":"s"}</span><span class="num ${h.headroom!=null&&h.headroom<0?"negative":""}">${h.headroom==null?"unknown":fmt(h.headroom)+" GB"}</span></div>`).join("");
+}
+function update(){
+  try { latest=calculate(); $("error").classList.remove("visible"); renderResults(); }
+  catch(err){ $("error").textContent=err.message; $("error").classList.add("visible"); }
+}
+function renderChoices(){
+  $("modelChoices").innerHTML=Object.values(MODELS).map(m=>`<label class="check-card"><input type="checkbox" data-model="${m.key}" ${state.models.has(m.key)?"checked":""}><span><b>${esc(m.short)}</b><small>${fmt(artifact(m).disk/GB)} GB disk</small></span></label>`).join("");
+  $("hardwareChoices").innerHTML=Object.values(HARDWARE).map(h=>`<label class="check-card"><input type="checkbox" data-hardware="${h.key}" ${state.hardware.has(h.key)?"checked":""}><span><b>${esc(h.short)}</b><small>${h.devicesPerNode} / node</small></span></label>`).join("");
+}
+function syncControls(){
+  $("sequences").value=state.sequences; $("residentTokens").value=state.residentTokens; $("blockSize").value=state.blockSize; $("indexerBytes").value=state.indexerBytes; $("r1Dtype").value=state.r1Dtype; $("utilization").value=state.utilization; $("batchedTokens").value=state.batchedTokens; $("workspaceCoeff").value=state.workspaceCoeff??""; $("workspaceFraction").value=state.workspaceFraction; $("graphFraction").value=state.graphFraction; $("reserveFraction").value=state.reserveFraction; $("dpSize").value=state.dpSize;
+  document.querySelector(`input[name="fp4"][value="${state.fp4}"]`).checked=true; document.querySelector(`input[name="workspaceMode"][value="${state.workspaceMode}"]`).checked=true; document.querySelector(`input[name="parallelism"][value="${state.parallelism}"]`).checked=true;
+}
+function resetAll(){ state=cloneDefaults(); expanded.clear(); overrides=Object.fromEntries(Object.keys(MODELS).map(k=>[k,{workspace:null,graph:null,reserve:null}])); syncControls(); renderChoices(); update(); toast("Defaults restored"); }
+function optionalNumber(id){ const value=$(id).value.trim(); if(value==="")return null; const n=Number(value); if(!Number.isFinite(n)||n<0)throw Error("Overrides must be non-negative numbers."); return n; }
+function exportJson(){
+  const envelope={concurrent_sequences:state.sequences,average_resident_tokens:state.residentTokens,block_size:state.blockSize,indexer_bytes_per_entry:state.indexerBytes,rounded_tokens_per_sequence:Math.ceil(state.residentTokens/state.blockSize)*state.blockSize,total_rounded_resident_tokens:state.sequences*Math.ceil(state.residentTokens/state.blockSize)*state.blockSize};
+  const assumptions={gpu_memory_utilization:state.utilization,max_num_batched_tokens:state.batchedTokens,workspace_mode:state.workspaceMode,workspace_bytes_per_batched_token:state.workspaceCoeff,runtime_workspace_fraction:state.workspaceFraction,graph_comm_fraction:state.graphFraction,safety_reserve_fraction:state.reserveFraction,fp4_resident_bytes_per_element:state.fp4,parallelism:state.parallelism,data_parallel_size:state.dpSize,r1_kv_cache_dtype:state.r1Dtype,per_model_overrides:overrides};
+  const models=latest.results.map(r=>({model:r.model,checkpoint:r.checkpoint,checkpoint_disk_gb:r.checkpointDiskGb,resident_model_weights_gb:r.weights,quantization_metadata_gb:r.metadata,runtime_model_workspace_gb:r.workspace,kv_cache_gb:r.kv,graph_communication_buffers_gb:r.graph,fragmentation_safety_reserve_gb:r.reserve,scenario_hbm_gb:r.total,recipe_vram_hint_gb:r.recipe,recipe_hint_delta_percent:r.delta,resident_weight_policy:r.policy,workspace_basis:r.basis,evidence_status:r.evidence}));
+  const hardware_conversion=latest.hardware;
+  const blob=new Blob([JSON.stringify({units:"decimal GB (1 GB = 1,000,000,000 bytes)",objective:"aggregate GPU/NPU HBM for one model instance",envelope,assumptions,models,hardware_conversion},null,2)],{type:"application/json"});
+  const url=URL.createObjectURL(blob),a=document.createElement("a"); a.href=url;a.download="deepseek-hbm-scenario.json";a.click();setTimeout(()=>URL.revokeObjectURL(url),500);toast("JSON exported");
+}
+let toastTimer;
+function toast(message){ $("toast").textContent=message;$("toast").classList.add("show");clearTimeout(toastTimer);toastTimer=setTimeout(()=>$("toast").classList.remove("show"),1800); }
+
+document.addEventListener("input",e=>{ if(e.target.matches(".controls input:not([type=checkbox]):not([type=radio])"))update(); });
+document.addEventListener("change",e=>{
+  if(e.target.matches("[data-model]")){ e.target.checked?state.models.add(e.target.dataset.model):state.models.delete(e.target.dataset.model);update();return; }
+  if(e.target.matches("[data-hardware]")){ e.target.checked?state.hardware.add(e.target.dataset.hardware):state.hardware.delete(e.target.dataset.hardware);update();return; }
+  if(e.target.closest(".controls"))update();
+});
+document.addEventListener("click",e=>{
+  const toggle=e.target.closest("[data-toggle]"); if(toggle){ const k=toggle.dataset.toggle;expanded.has(k)?expanded.delete(k):expanded.add(k);renderResults();return; }
+  const apply=e.target.closest("[data-apply]"); if(apply){ try{const k=apply.dataset.apply;overrides[k]={workspace:optionalNumber(`ov-workspace-${k}`),graph:optionalNumber(`ov-graph-${k}`),reserve:optionalNumber(`ov-reserve-${k}`)};update();toast("Overrides applied");}catch(err){$("error").textContent=err.message;$("error").classList.add("visible");}return; }
+  const clear=e.target.closest("[data-clear]"); if(clear){overrides[clear.dataset.clear]={workspace:null,graph:null,reserve:null};update();toast("Overrides cleared");}
+});
+document.querySelectorAll("[data-tab]").forEach(tab=>tab.addEventListener("click",()=>{
+  document.querySelectorAll("[data-tab]").forEach(t=>t.setAttribute("aria-selected",String(t===tab)));
+  document.querySelectorAll(".panel").forEach(p=>p.hidden=p.id!==tab.dataset.tab);
+}));
+$("resetTop").addEventListener("click",resetAll); $("exportBtn").addEventListener("click",exportJson); $("printBtn").addEventListener("click",()=>window.print());
+renderChoices(); syncControls(); update();
+</script>
+</body>
+</html>
