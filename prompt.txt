@@ -1,0 +1,22 @@
+Retrieve each file listed below by its exact filename and cite it.
+
+<files>
+[PLACEHOLDER: 8–10 exact filenames, one per line]
+</files>
+
+Output exactly one line per file in <files>, in the same order, in this format:
+
+<filename> | FOUND | [n]
+<filename> | NOT_FOUND | -
+
+Rules:
+- Match filenames exactly. If no exact match exists, output NOT_FOUND. Never
+  substitute a similarly named file and never infer which file was meant.
+- An attachment is an independent file from its parent. Cite each separately;
+  that is not duplication.
+- If a file cannot be retrieved, output NOT_FOUND and continue to the next.
+  Do not stop the run.
+- No summaries, no commentary, no grouping. The number of output lines must
+  equal the number of lines in <files>.
+
+End with the citation list, one entry per FOUND file.
