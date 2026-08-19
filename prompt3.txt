@@ -1,0 +1,46 @@
+TASK:
+
+Retrieve and cite EVERY filename in the FILE LIST.
+
+IMPORTANT RULES:
+
+1. Every line in the FILE LIST is one separate file.
+
+2. Search EACH filename separately.
+
+3. If a filename contains "Attachment", it is STILL a separate file.
+   You MUST search and cite that attachment itself.
+
+4. Do NOT use the citation of another file as a substitute.
+
+5. Do NOT skip a file because it looks related to a previous file.
+
+6. For each filename:
+   - search that exact filename;
+   - if found, cite that exact file ONCE;
+   - if retrieval fails, write RETRIEVAL_FAILED;
+   - then continue to the NEXT filename.
+
+7. A retrieval failure must NOT stop the task.
+
+8. Continue until you reach the END OF FILE LIST.
+
+OUTPUT:
+
+One line for every input filename.
+
+filename.pdf — [citation]
+
+or
+
+filename.pdf — RETRIEVAL_FAILED
+
+Do not add dates.
+Do not summarize.
+Do not explain the files.
+Do not combine files.
+Do not omit attachments.
+
+FILE LIST:
+
+...
