@@ -5,3 +5,18 @@ const r = await fetch(URL, { headers: { authorization: TOKEN } });
 console.log(r.status, r.headers.get("content-type"), r.headers.get("content-length"));
 const b = await r.blob();
 console.log("bytes:", b.size);
+
+const U = "PASTE_THE_FULL_URL";
+
+// cookie only
+let r = await fetch(U, { credentials: "include" });
+console.log("cookie only:", r.status, r.headers.get("content-type"));
+console.log(await r.text());
+
+const U = "PASTE_THE_FULL_URL";
+const T = "Bearer " + "PASTE_TOKEN_FROM_LOCAL_STORAGE";
+
+// bearer only
+let r = await fetch(U, { headers: { authorization: T }, credentials: "omit" });
+console.log("bearer only:", r.status, r.headers.get("content-type"));
+console.log(await r.text());
