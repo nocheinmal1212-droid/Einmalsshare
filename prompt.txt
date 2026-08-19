@@ -20,3 +20,33 @@ Rules:
   equal the number of lines in <files>.
 
 End with the citation list, one entry per FOUND file.
+
+v2
+
+Fill in a value for every numbered line below. The list is fixed: return all
+[N] lines, in order, with the numbering intact.
+
+Before writing each line's value:
+- Search for that one filename. One search per line. Do not run a single
+  combined search covering several lines.
+- If nothing matches, search again on the ID fragment alone (e.g. 2025_31),
+  then write the value.
+
+Value formats:
+  <resolved filename> | [n]      found — cite it
+  CANDIDATES: <filenames seen>   searches returned documents, none matched
+  ZERO                           both searches returned no documents at all
+
+1. UN_GAAM_ALERT_2025_31.pdf ->
+2. UN_GAAM_ALERT_2025_32.pdf ->
+3. [PLACEHOLDER: one pre-numbered, pre-named line per file]
+
+Rules:
+- Every numbered line gets a value. If you are about to skip a line, write
+  ZERO and continue.
+- Do not merge, group, reorder, or summarize lines. Do not add lines.
+- Files differing only by an _Attachment_N suffix are separate documents.
+  Resolving one does not resolve the other; a citation for one is not a
+  citation for the other.
+
+Citations follow the completed list.
