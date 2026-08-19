@@ -1,0 +1,28 @@
+Retrieve and cite every numbered file below.
+
+RULES:
+
+- Process the files one by one, in order.
+- Every numbered line is a separate retrieval target.
+- Search each listed filename independently.
+- Files containing "Attachment" are separate files and MUST be retrieved separately.
+- A parent file does NOT satisfy an attachment.
+- If one file cannot be retrieved, write FAILED and continue.
+- Do not stop because one retrieval fails.
+- Do not provide dates, summaries, explanations, or a separate citation list.
+- Output exactly one short line per input file.
+- Use no more than one citation per line.
+
+OUTPUT:
+
+001 | filename.pdf | [citation]
+
+or
+
+001 | filename.pdf | FAILED
+
+FILE LIST:
+
+001 | ...
+002 | ...
+003 | ...
