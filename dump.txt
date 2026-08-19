@@ -1,0 +1,7 @@
+const TOKEN = "Bearer eyJ...";              // ← paste yours
+const URL   = "https://.../citation/getfile/....pdf/0";  // ← paste yours
+
+const r = await fetch(URL, { headers: { authorization: TOKEN } });
+console.log(r.status, r.headers.get("content-type"), r.headers.get("content-length"));
+const b = await r.blob();
+console.log("bytes:", b.size);

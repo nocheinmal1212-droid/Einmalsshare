@@ -1,527 +1,316 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="description" content="A local-first workspace for managing prompts, experiments, test subjects, environments, and results." />
-  <title>PromptLab — Experiment workspace</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="A local-first editor for prompt projects, child prompts, subjects, environments, and test results.">
+  <title>PromptLab — Prompt project editor</title>
   <style>
     :root {
-      --ink: #191a1d;
-      --muted: #6f7378;
-      --faint: #9da1a6;
-      --line: #e9e6df;
-      --paper: #fbfaf7;
-      --panel: #ffffff;
-      --nav: #f1f0ec;
-      --accent: #e85d33;
-      --accent-dark: #bd3e1c;
-      --accent-soft: #fff0e9;
-      --green: #1f8a5b;
-      --green-soft: #e8f7ef;
-      --amber: #a86d13;
-      --amber-soft: #fff4d8;
-      --blue: #4b68d0;
-      --blue-soft: #edf0ff;
-      --shadow: 0 18px 55px rgba(36, 33, 27, .11);
-      --radius: 14px;
-      font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      --bg: #f4f3ef; --paper: #fff; --rail: #202321; --rail-2: #292c2a;
+      --ink: #20231f; --muted: #6f756f; --faint: #9ba19b; --line: #e3e3dc; --soft: #f7f7f3;
+      --accent: #cf573d; --accent-soft: #fae9e4; --green: #287554; --green-soft: #e5f3ec;
+      --blue: #4f67bb; --blue-soft: #eaf0ff; --shadow: 0 18px 50px rgba(26,30,27,.14);
+      --ui: Inter, "Segoe UI", Arial, Helvetica, sans-serif;
+      --mono: "Cascadia Code", "SFMono-Regular", Consolas, "Liberation Mono", monospace;
     }
-
     * { box-sizing: border-box; }
-    body { margin: 0; color: var(--ink); background: var(--paper); min-width: 320px; }
-    button, input, select, textarea { font: inherit; }
-    button { color: inherit; }
-    .app { min-height: 100vh; display: grid; grid-template-columns: 236px 1fr; }
+    html, body { width: 100%; height: 100%; }
+    body { margin: 0; overflow: hidden; color: var(--ink); background: var(--bg); font-family: var(--ui); font-size: 14px; line-height: 1.45; }
+    button, input, textarea, select { font: inherit; color: inherit; }
+    button { cursor: pointer; }
+    .app { width: 100%; height: 100vh; height: 100dvh; display: grid; grid-template-columns: 248px minmax(0,1fr); overflow: hidden; }
 
-    .sidebar {
-      background: var(--nav); border-right: 1px solid var(--line); padding: 25px 16px 18px;
-      display: flex; flex-direction: column; min-height: 100vh; position: sticky; top: 0; height: 100vh;
+    .project-rail { min-width: 0; height: 100%; overflow: hidden; color: #e7e9e5; background: var(--rail); border-right: 1px solid #171918; display: flex; flex-direction: column; }
+    .brand { height: 64px; flex: 0 0 64px; padding: 0 18px; display: flex; align-items: center; gap: 11px; border-bottom: 1px solid #333734; font-weight: 730; letter-spacing: -.02em; }
+    .brand-mark { width: 25px; height: 25px; border: 1px solid #737c75; border-radius: 7px; display: grid; place-items: center; color: #ff8062; font-family: Georgia, serif; font-size: 17px; }
+    .rail-head { flex: 0 0 auto; padding: 19px 14px 11px; }
+    .rail-label { display: flex; justify-content: space-between; align-items: center; margin: 0 5px 10px; color: #999f9a; font-size: 10px; font-weight: 750; letter-spacing: .11em; text-transform: uppercase; }
+    .new-project { width: 100%; border: 1px solid #444945; background: var(--rail-2); color: #f2f3f0; border-radius: 8px; padding: 9px 11px; display: flex; align-items: center; gap: 9px; text-align: left; font-size: 12px; }
+    .new-project:hover { border-color: #606761; background: #303431; }
+    .new-project b { color: #ff8062; font-size: 17px; font-weight: 400; line-height: 1; }
+    .project-search { margin-top: 10px; position: relative; }
+    .project-search input { width: 100%; border: 0; border-radius: 7px; background: #191c1a; color: #dfe2de; outline: 0; padding: 8px 10px 8px 30px; font-size: 11px; }
+    .project-search input:focus { box-shadow: 0 0 0 1px #58605a; }
+    .project-search::before { content: "⌕"; position: absolute; left: 10px; top: 4px; color: #7d847e; font-size: 17px; }
+    .project-list { min-height: 0; overflow: auto; padding: 2px 9px 14px; scrollbar-color: #474c48 transparent; scrollbar-width: thin; }
+    .project-button { width: 100%; border: 0; border-radius: 8px; background: transparent; color: #bfc4bf; padding: 10px; margin-bottom: 3px; display: grid; grid-template-columns: 27px minmax(0,1fr); gap: 9px; align-items: center; text-align: left; }
+    .project-button:hover { background: #292d2a; color: #fff; }
+    .project-button.active { background: #343936; color: #fff; }
+    .project-icon { width: 27px; height: 27px; border: 1px solid #4c524d; border-radius: 6px; display: grid; place-items: center; color: #e5765b; font-family: Georgia, serif; font-size: 12px; }
+    .project-button.active .project-icon { background: #fff0eb; color: var(--accent); border-color: transparent; }
+    .project-name { min-width: 0; font-size: 11px; font-weight: 650; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .project-meta { color: #7f8680; font-size: 9px; margin-top: 3px; }
+    .rail-foot { flex: 0 0 auto; border-top: 1px solid #343835; padding: 13px 14px 16px; }
+    .local-note { color: #858c86; font-size: 9px; line-height: 1.5; margin-bottom: 10px; }
+    .local-note strong { display: block; color: #b9beba; font-size: 10px; }
+    .clear-all { border: 0; background: transparent; color: #d58c7c; padding: 0; font-size: 10px; text-decoration: underline; text-underline-offset: 3px; text-decoration-color: #74483f; }
+    .clear-all:hover { color: #ffaf9d; }
+
+    .workspace-shell { min-width: 0; min-height: 0; height: 100%; display: grid; grid-template-rows: 64px minmax(0,1fr); }
+    .topbar { min-width: 0; background: var(--paper); border-bottom: 1px solid var(--line); padding: 0 22px; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+    .top-left, .top-right { display: flex; align-items: center; min-width: 0; gap: 10px; }
+    .breadcrumb { min-width: 0; color: var(--muted); font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .breadcrumb strong { color: var(--ink); font-weight: 650; }
+    .save-state { display: flex; align-items: center; gap: 6px; color: var(--green); font-size: 10px; white-space: nowrap; }
+    .save-state::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+    .save-state.saving { color: #9a741f; }
+    .tool-button { border: 1px solid var(--line); background: #fff; border-radius: 7px; padding: 8px 11px; font-size: 10px; font-weight: 650; white-space: nowrap; }
+    .tool-button:hover { background: var(--soft); border-color: #cccec7; }
+    .tool-button.primary { background: var(--ink); border-color: var(--ink); color: #fff; }
+    .tool-button.primary:hover { background: #343934; }
+    .tool-button:disabled { opacity: .45; cursor: not-allowed; }
+    .mobile-menu { display: none; width: 34px; height: 34px; padding: 0; place-items: center; font-size: 16px; }
+    .rail-collapse { width: 30px; height: 30px; padding: 0; display: grid; place-items: center; font-size: 15px; line-height: 1; }
+    .workspace { min-width: 0; min-height: 0; overflow: hidden; display: grid; grid-template-columns: 232px minmax(0,1fr); }
+
+    @media (min-width: 901px) {
+      .app, .project-rail, .brand, .project-button { transition: grid-template-columns .2s ease, width .2s ease, padding .2s ease; }
+      .app.rail-collapsed { grid-template-columns: 68px minmax(0,1fr); }
+      .app.rail-collapsed .brand { padding: 0; justify-content: center; }
+      .app.rail-collapsed .brand span,
+      .app.rail-collapsed .rail-head,
+      .app.rail-collapsed .project-button > div:last-child,
+      .app.rail-collapsed .rail-foot { display: none; }
+      .app.rail-collapsed .project-list { padding: 13px 8px; }
+      .app.rail-collapsed .project-button { display: flex; justify-content: center; padding: 8px; }
+      .app.rail-collapsed .project-icon { flex: 0 0 31px; width: 31px; height: 31px; }
     }
-    .brand { display: flex; align-items: center; gap: 11px; padding: 0 10px 29px; font-weight: 760; letter-spacing: -.04em; font-size: 19px; }
-    .brand-mark { width: 27px; height: 27px; border: 2px solid var(--ink); border-radius: 50%; position: relative; }
-    .brand-mark::before, .brand-mark::after { content: ""; position: absolute; background: var(--ink); }
-    .brand-mark::before { width: 2px; height: 17px; left: 11px; top: 3px; transform: rotate(34deg); }
-    .brand-mark::after { width: 10px; height: 2px; left: 7px; top: 11px; transform: rotate(-34deg); }
-    .nav-label { padding: 0 12px; color: var(--faint); text-transform: uppercase; letter-spacing: .12em; font-size: 10px; font-weight: 750; margin: 7px 0 8px; }
-    .nav { display: grid; gap: 3px; }
-    .nav button { border: 0; background: transparent; text-align: left; border-radius: 9px; padding: 10px 11px; cursor: pointer; display: flex; align-items: center; gap: 11px; color: #595c61; font-size: 14px; }
-    .nav button:hover { background: rgba(255,255,255,.62); color: var(--ink); }
-    .nav button.active { background: var(--panel); color: var(--ink); box-shadow: 0 1px 5px rgba(40,35,28,.06); font-weight: 650; }
-    .nav-icon { width: 18px; text-align: center; color: #7d7f82; font-size: 14px; }
-    .nav-count { margin-left: auto; font-size: 11px; color: var(--faint); font-variant-numeric: tabular-nums; }
-    .storage-note { margin-top: auto; padding: 15px 12px; border-top: 1px solid #dfddd7; color: var(--muted); font-size: 11px; line-height: 1.5; }
-    .storage-note strong { color: #4f5256; display: block; margin-bottom: 3px; }
-    .clear-workspace { margin-top: 10px; padding: 0; border: 0; background: transparent; color: #a84a37; font-size: 10px; font-weight: 700; cursor: pointer; text-decoration: underline; text-decoration-color: #dfb6ac; text-underline-offset: 3px; }
-    .clear-workspace:hover { color: #792d1e; }
-    .profile { display: flex; align-items: center; gap: 10px; padding: 14px 10px 2px; }
-    .avatar { width: 30px; height: 30px; border-radius: 50%; background: #232428; color: #fff; display: grid; place-items: center; font-size: 10px; font-weight: 750; }
-    .profile-name { font-size: 12px; font-weight: 650; }
-    .profile-meta { font-size: 10px; color: var(--faint); margin-top: 2px; }
 
-    .main { min-width: 0; }
-    .topbar { height: 74px; padding: 0 38px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--line); background: rgba(251,250,247,.88); backdrop-filter: blur(16px); position: sticky; top: 0; z-index: 10; }
-    .crumb { color: var(--muted); font-size: 12px; }
-    .crumb strong { color: var(--ink); }
-    .top-actions { display: flex; align-items: center; gap: 10px; }
-    .search { position: relative; }
-    .search input { width: 225px; border: 1px solid var(--line); border-radius: 9px; background: var(--panel); padding: 9px 34px 9px 32px; font-size: 12px; outline: none; }
-    .search input:focus { border-color: #c8c5bd; box-shadow: 0 0 0 3px rgba(45,45,45,.04); }
-    .search::before { content: "⌕"; position: absolute; left: 11px; top: 6px; color: var(--faint); font-size: 17px; }
-    .kbd { position: absolute; right: 8px; top: 7px; font-size: 9px; color: var(--faint); border: 1px solid var(--line); border-radius: 4px; padding: 2px 4px; }
-    .icon-btn { width: 35px; height: 35px; border: 1px solid var(--line); border-radius: 9px; background: var(--panel); cursor: pointer; display: grid; place-items: center; }
-    .icon-btn:hover { border-color: #ccc8bf; }
-    .primary { border: 0; background: var(--accent); color: #fff; border-radius: 9px; padding: 10px 15px; font-size: 12px; font-weight: 700; cursor: pointer; box-shadow: 0 5px 14px rgba(232,93,51,.22); }
-    .primary:hover { background: var(--accent-dark); transform: translateY(-1px); }
+    .tree { min-width: 0; min-height: 0; overflow-y: auto; background: #efeee9; border-right: 1px solid #dadad3; padding: 20px 11px; scrollbar-width: thin; scrollbar-color: #c7c7c0 transparent; }
+    .tree-project { padding: 0 9px 17px; }
+    .tree-kicker { color: var(--faint); font-size: 9px; font-weight: 750; letter-spacing: .1em; text-transform: uppercase; margin-bottom: 5px; }
+    .tree-title { font-size: 12px; font-weight: 720; line-height: 1.35; overflow-wrap: anywhere; }
+    .tree-root, .folder-button, .tree-item { width: 100%; border: 0; background: transparent; border-radius: 7px; text-align: left; display: flex; align-items: center; color: #565b56; }
+    .tree-root { padding: 9px; gap: 8px; font-size: 11px; font-weight: 650; }
+    .tree-root:hover, .folder-button:hover, .tree-item:hover { background: #e4e3dd; color: var(--ink); }
+    .tree-root.active, .folder-button.active, .tree-item.active { background: #fff; color: var(--ink); box-shadow: 0 1px 4px rgba(37,40,37,.07); }
+    .root-symbol { width: 18px; height: 18px; display: grid; place-items: center; border-radius: 4px; background: var(--accent-soft); color: var(--accent); font-family: Georgia, serif; }
+    .folder { margin-top: 4px; }
+    .folder-button { padding: 8px 9px; gap: 7px; font-size: 10px; font-weight: 650; }
+    .chevron { width: 9px; color: #939892; font-size: 9px; }
+    .folder-glyph { color: #7d827d; width: 16px; }
+    .folder-count { margin-left: auto; color: #a0a59f; font-size: 9px; font-variant-numeric: tabular-nums; }
+    .tree-children { padding-left: 20px; position: relative; }
+    .tree-children::before { content: ""; position: absolute; left: 13px; top: 0; bottom: 7px; width: 1px; background: #d5d5ce; }
+    .tree-item { min-width: 0; padding: 7px; gap: 6px; font-size: 10px; position: relative; }
+    .tree-item span:last-child { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .file-dot { width: 5px; height: 5px; flex: 0 0 5px; border-radius: 50%; background: #a5aaa4; }
+    .tree-item.active .file-dot { background: var(--accent); }
+    .tree-empty { color: #a1a69f; font-size: 9px; padding: 5px 7px 8px; }
 
-    .content { padding: 39px 38px 60px; max-width: 1440px; margin: 0 auto; }
-    .heading-row { display: flex; align-items: flex-end; justify-content: space-between; gap: 20px; margin-bottom: 27px; }
-    h1 { font-family: Georgia, 'Times New Roman', serif; font-size: clamp(32px, 4vw, 46px); line-height: 1; letter-spacing: -.045em; margin: 0 0 9px; font-weight: 500; }
-    .subtitle { color: var(--muted); margin: 0; font-size: 13px; }
-    .date-chip { color: var(--muted); font-size: 11px; border: 1px solid var(--line); background: rgba(255,255,255,.56); border-radius: 999px; padding: 8px 12px; white-space: nowrap; }
+    .surface { min-width: 0; min-height: 0; overflow: auto; background: var(--bg); scrollbar-width: thin; scrollbar-color: #c9c9c2 transparent; }
+    .surface-inner { width: min(1160px,100%); min-height: 100%; margin: 0 auto; padding: 31px 32px 52px; }
+    .page-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; margin-bottom: 22px; }
+    .eyebrow { color: var(--accent); font-size: 9px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; margin-bottom: 7px; }
+    h1 { margin: 0; font-family: Georgia, "Times New Roman", serif; font-size: 30px; line-height: 1.15; letter-spacing: -.025em; font-weight: 500; }
+    .page-subtitle { max-width: 620px; margin: 7px 0 0; color: var(--muted); font-size: 11px; }
+    .head-actions { display: flex; gap: 8px; flex: 0 0 auto; }
+    .danger-button { border: 1px solid #efd2ca; color: #a74430; background: #fff8f6; border-radius: 7px; padding: 8px 10px; font-size: 10px; font-weight: 650; }
+    .danger-button:hover { background: #fbe7e2; }
 
-    .metrics { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 13px; margin-bottom: 25px; }
-    .metric { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 18px 19px; min-height: 106px; position: relative; overflow: hidden; }
-    .metric::after { content: ""; position: absolute; width: 70px; height: 70px; border-radius: 50%; background: var(--metric-color, var(--accent-soft)); right: -29px; bottom: -31px; opacity: .7; }
-    .metric-label { color: var(--muted); font-size: 11px; margin-bottom: 15px; display: flex; justify-content: space-between; }
-    .metric-value { font-family: Georgia, 'Times New Roman', serif; font-size: 29px; line-height: 1; letter-spacing: -.03em; }
-    .metric-delta { font-family: Inter, sans-serif; font-size: 10px; color: var(--green); margin-left: 6px; }
+    .editor-grid { min-width: 0; display: grid; grid-template-columns: minmax(0,1fr) 250px; gap: 16px; align-items: start; }
+    .editor-card, .side-card, .collection-card, .form-card { background: var(--paper); border: 1px solid var(--line); border-radius: 10px; box-shadow: 0 1px 2px rgba(35,38,35,.025); }
+    .editor-card { min-width: 0; overflow: hidden; }
+    .editor-toolbar { min-height: 47px; padding: 8px 11px 8px 15px; border-bottom: 1px solid var(--line); display: flex; align-items: center; justify-content: space-between; gap: 12px; background: #fafaf7; }
+    .editor-label { color: #5d625c; font-size: 10px; font-weight: 730; }
+    .editor-actions { display: flex; gap: 6px; }
+    .editor-action { border: 1px solid #dedfd8; background: #fff; border-radius: 6px; padding: 6px 8px; font-size: 9px; color: #5f645f; }
+    .editor-action:hover { border-color: #bfc2ba; color: var(--ink); }
+    .title-input { width: 100%; border: 0; border-bottom: 1px solid var(--line); background: #fff; outline: 0; padding: 19px 22px 15px; font-family: Georgia, "Times New Roman", serif; font-size: 23px; line-height: 1.25; }
+    .title-input:focus { box-shadow: inset 3px 0 0 var(--accent); }
+    .prompt-editor { display: block; width: 100%; min-height: 430px; border: 0; resize: vertical; outline: 0; padding: 23px 25px; background: #fff; color: #252925; font-family: var(--mono); font-size: 13px; line-height: 1.75; tab-size: 2; white-space: pre-wrap; overflow-wrap: break-word; }
+    .prompt-editor:focus { box-shadow: inset 3px 0 0 var(--accent-soft); }
+    .editor-foot { min-height: 39px; border-top: 1px solid var(--line); padding: 9px 15px; display: flex; justify-content: space-between; align-items: center; color: var(--faint); font-size: 9px; background: #fafaf7; }
+    .side-stack { display: grid; gap: 12px; }
+    .side-card { padding: 16px; }
+    .side-card h3 { margin: 0 0 13px; font-size: 10px; text-transform: uppercase; letter-spacing: .09em; color: #626762; }
+    .stat-list { display: grid; gap: 10px; }
+    .stat { display: flex; justify-content: space-between; align-items: center; color: var(--muted); font-size: 10px; }
+    .stat strong { color: var(--ink); font-family: Georgia, serif; font-size: 16px; font-weight: 500; }
+    .chip-list { display: flex; flex-wrap: wrap; gap: 6px; }
+    .chip { border-radius: 999px; padding: 5px 7px; font-family: var(--mono); font-size: 8px; background: var(--blue-soft); color: var(--blue); }
+    .chip.empty { background: var(--soft); color: var(--faint); font-family: var(--ui); }
+    .quick-link { width: 100%; border: 0; border-top: 1px solid #ecece6; background: transparent; padding: 10px 0; display: flex; justify-content: space-between; text-align: left; font-size: 10px; color: var(--muted); }
+    .quick-link:first-of-type { border-top: 0; padding-top: 0; }
+    .quick-link:hover { color: var(--ink); }
+    .quick-link b { color: var(--ink); font-weight: 650; }
 
-    .workspace { display: grid; grid-template-columns: minmax(0, 1.65fr) minmax(270px, .72fr); gap: 17px; align-items: start; }
-    .card { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); }
-    .card-head { display: flex; align-items: center; justify-content: space-between; padding: 18px 19px 15px; border-bottom: 1px solid var(--line); gap: 15px; }
-    .card-title { font-size: 13px; font-weight: 720; }
-    .segmented { display: flex; background: #f5f4f1; padding: 3px; border-radius: 8px; }
-    .segmented button { border: 0; background: transparent; border-radius: 6px; padding: 6px 10px; font-size: 10px; color: var(--muted); cursor: pointer; }
-    .segmented button.active { background: #fff; color: var(--ink); box-shadow: 0 1px 4px rgba(0,0,0,.08); }
-
-    .list { padding: 4px 10px 10px; }
-    .list-row { display: grid; grid-template-columns: 34px minmax(0,1fr) 110px 70px 30px; gap: 10px; align-items: center; padding: 13px 8px; border-bottom: 1px solid #f0eee9; cursor: pointer; border-radius: 9px; transition: background .16s; }
-    .list-row:hover { background: #faf9f6; }
-    .list-row:last-child { border-bottom: 0; }
-    .run-index { width: 29px; height: 29px; border-radius: 8px; background: #f4f2ed; display: grid; place-items: center; color: var(--muted); font-size: 10px; font-weight: 720; }
-    .run-title { font-size: 12px; font-weight: 680; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .run-meta { color: var(--faint); font-size: 10px; margin-top: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .status { justify-self: start; display: inline-flex; align-items: center; gap: 6px; font-size: 10px; border-radius: 999px; padding: 5px 8px; font-weight: 650; }
-    .status::before { content: ""; width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
-    .status.completed { color: var(--green); background: var(--green-soft); }
-    .status.running { color: var(--blue); background: var(--blue-soft); }
-    .status.draft { color: var(--amber); background: var(--amber-soft); }
-    .score { text-align: right; }
-    .score strong { display: block; font-family: Georgia, serif; font-size: 18px; font-weight: 500; }
-    .score span { color: var(--faint); font-size: 8px; text-transform: uppercase; letter-spacing: .08em; }
-    .more { border: 0; background: transparent; color: var(--faint); cursor: pointer; border-radius: 5px; font-size: 17px; }
-    .more:hover { background: #eceae5; color: var(--ink); }
-    .empty { padding: 48px 20px; text-align: center; color: var(--muted); font-size: 12px; }
-    .empty strong { display: block; color: var(--ink); font-family: Georgia, serif; font-size: 20px; font-weight: 500; margin-bottom: 8px; }
-
-    .right-stack { display: grid; gap: 17px; }
-    .scorecard { padding: 20px; }
-    .scorecard-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 19px; }
-    .scorecard-title { font-size: 12px; font-weight: 720; }
-    .scorecard small { color: var(--faint); font-size: 9px; }
-    .big-score { display: flex; align-items: baseline; gap: 6px; margin-bottom: 14px; }
-    .big-score strong { font-family: Georgia, serif; font-size: 44px; line-height: 1; font-weight: 500; }
-    .big-score span { color: var(--muted); font-size: 11px; }
-    .bar { height: 5px; background: #eeece7; border-radius: 999px; overflow: hidden; }
-    .bar > i { display: block; width: 84%; height: 100%; background: var(--accent); border-radius: inherit; }
-    .dimension { margin-top: 14px; display: grid; grid-template-columns: 1fr 30px; align-items: center; gap: 10px; font-size: 10px; color: var(--muted); }
-    .dimension .mini-bar { grid-column: 1/-1; height: 3px; background: #eeece7; border-radius: 999px; margin-top: -4px; }
-    .mini-bar i { display: block; height: 100%; background: #36373b; border-radius: inherit; }
-    .activity { padding: 8px 19px 12px; }
-    .activity-item { position: relative; padding: 11px 0 11px 20px; font-size: 10px; color: var(--muted); line-height: 1.45; }
-    .activity-item::before { content: ""; position: absolute; width: 7px; height: 7px; border: 2px solid var(--accent); background: #fff; border-radius: 50%; left: 0; top: 14px; }
-    .activity-item::after { content: ""; position: absolute; width: 1px; height: calc(100% - 5px); background: var(--line); left: 4px; top: 24px; }
-    .activity-item:last-child::after { display: none; }
-    .activity-item strong { color: var(--ink); font-weight: 650; }
-
-    .record-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 13px; }
-    .record-card { background: #fff; border: 1px solid var(--line); border-radius: 13px; padding: 18px; cursor: pointer; min-height: 165px; display: flex; flex-direction: column; transition: .18s ease; }
-    .record-card:hover { transform: translateY(-2px); box-shadow: 0 10px 25px rgba(30,28,24,.06); border-color: #d9d5cc; }
-    .record-type { color: var(--accent); font-size: 9px; text-transform: uppercase; letter-spacing: .11em; font-weight: 780; margin-bottom: 16px; }
-    .record-card h3 { font-family: Georgia, serif; font-size: 19px; font-weight: 500; line-height: 1.15; margin: 0 0 9px; }
-    .record-card p { color: var(--muted); font-size: 11px; line-height: 1.5; margin: 0 0 14px; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
-    .record-foot { margin-top: auto; display: flex; justify-content: space-between; color: var(--faint); font-size: 9px; }
-
-    .modal-backdrop { position: fixed; inset: 0; z-index: 50; background: rgba(25,26,29,.34); backdrop-filter: blur(4px); display: none; align-items: center; justify-content: center; padding: 20px; }
-    .modal-backdrop.open { display: flex; animation: fadeIn .18s ease; }
-    .modal { width: min(720px, 100%); max-height: 90vh; overflow: auto; background: var(--paper); border-radius: 18px; box-shadow: var(--shadow); border: 1px solid rgba(255,255,255,.8); animation: slideIn .2s ease; }
-    .modal-head { padding: 23px 25px 17px; display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 1px solid var(--line); }
-    .modal-kicker { color: var(--accent); font-size: 9px; text-transform: uppercase; letter-spacing: .13em; font-weight: 800; margin-bottom: 7px; }
-    .modal h2 { font-family: Georgia, serif; font-size: 27px; letter-spacing: -.025em; font-weight: 500; margin: 0; }
-    .close { border: 0; background: transparent; color: var(--muted); cursor: pointer; font-size: 20px; padding: 3px 7px; }
-    form { padding: 23px 25px 25px; }
-    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 17px; }
-    .field { display: grid; gap: 7px; }
+    .collection-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 11px; }
+    .collection-card { min-width: 0; padding: 17px; text-align: left; cursor: pointer; transition: transform .15s ease,border-color .15s ease,box-shadow .15s ease; }
+    .collection-card:hover { transform: translateY(-1px); border-color: #cfd0c9; box-shadow: 0 8px 25px rgba(30,34,31,.06); }
+    .collection-type { color: var(--accent); font-size: 8px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; margin-bottom: 9px; }
+    .collection-card h3 { margin: 0 0 7px; font-family: Georgia, serif; font-weight: 500; font-size: 17px; line-height: 1.25; }
+    .collection-card p { min-height: 32px; margin: 0; color: var(--muted); font-size: 10px; line-height: 1.55; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    .card-foot { margin-top: 14px; padding-top: 10px; border-top: 1px solid #eeeee8; display: flex; align-items: center; justify-content: space-between; color: var(--faint); font-size: 9px; }
+    .score-pill { padding: 4px 7px; border-radius: 999px; background: var(--green-soft); color: var(--green); font-weight: 750; }
+    .form-card { padding: 21px; }
+    .field-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+    .field { min-width: 0; display: grid; gap: 6px; }
     .field.full { grid-column: 1/-1; }
-    .field label { font-size: 10px; color: #595c60; font-weight: 720; }
-    .field input, .field select, .field textarea { width: 100%; border: 1px solid #dedbd3; background: #fff; border-radius: 9px; padding: 10px 11px; color: var(--ink); outline: 0; font-size: 12px; }
-    .field textarea { min-height: 90px; resize: vertical; line-height: 1.55; }
-    .field input:focus, .field select:focus, .field textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
-    .modal-actions { display: flex; justify-content: space-between; gap: 10px; border-top: 1px solid var(--line); margin-top: 22px; padding-top: 18px; }
-    .action-group { display: flex; gap: 8px; }
-    .secondary, .danger { border: 1px solid var(--line); background: #fff; border-radius: 8px; padding: 9px 13px; font-size: 11px; font-weight: 650; cursor: pointer; }
-    .danger { color: #b33827; border-color: #f0d7d2; background: #fff8f6; }
-    .setup-intro { margin: -3px 0 20px; color: var(--muted); font-size: 11px; line-height: 1.55; }
-    .setup-section { display: grid; grid-template-columns: 34px minmax(0,1fr); gap: 13px; padding: 20px 0; border-top: 1px solid var(--line); }
-    .setup-section:first-of-type { border-top: 0; padding-top: 0; }
-    .step-index { width: 27px; height: 27px; border: 1px solid #dcd8cf; border-radius: 50%; display: grid; place-items: center; color: var(--accent); background: #fff; font-family: Georgia, serif; font-size: 12px; }
-    .setup-body h3 { margin: 4px 0 4px; font-family: Georgia, serif; font-size: 17px; font-weight: 500; }
-    .setup-body > p { color: var(--muted); font-size: 10px; line-height: 1.45; margin: 0 0 13px; }
-    .mode-switch { display: inline-flex; padding: 3px; margin-bottom: 13px; border-radius: 8px; background: #ebe9e4; }
-    .mode-switch button { border: 0; background: transparent; padding: 6px 10px; color: var(--muted); border-radius: 6px; font-size: 10px; cursor: pointer; }
-    .mode-switch button.active { background: #fff; color: var(--ink); box-shadow: 0 1px 4px rgba(0,0,0,.08); font-weight: 700; }
-    .mode-switch button:disabled { opacity: .38; cursor: not-allowed; }
-    .setup-panel { background: rgba(255,255,255,.62); border: 1px solid #e6e2da; border-radius: 11px; padding: 13px; }
-    .setup-panel.hidden { display: none; }
-    .compact-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 11px; }
-    .compact-grid .full { grid-column: 1/-1; }
-    .setup-panel textarea { min-height: 76px; }
-    .deferred-note { display: flex; gap: 9px; align-items: center; margin: 3px 0 -2px 47px; padding: 11px 13px; background: var(--green-soft); border-radius: 9px; color: #35705a; font-size: 10px; line-height: 1.4; }
-    .deferred-note b { color: var(--green); font-size: 13px; }
-    .toast { position: fixed; right: 24px; bottom: 24px; z-index: 80; background: #242528; color: #fff; border-radius: 10px; box-shadow: var(--shadow); padding: 12px 16px; font-size: 11px; transform: translateY(20px); opacity: 0; pointer-events: none; transition: .25s ease; }
-    .toast.show { opacity: 1; transform: translateY(0); }
-    .mobile-toggle { display: none; }
+    .field label { color: #626762; font-size: 9px; font-weight: 750; letter-spacing: .03em; }
+    .field input, .field textarea, .field select { width: 100%; border: 1px solid #dbdcd5; border-radius: 7px; background: #fff; outline: 0; padding: 10px 11px; font-size: 11px; }
+    .field textarea { min-height: 120px; resize: vertical; line-height: 1.6; }
+    .field input:focus, .field textarea:focus, .field select:focus { border-color: #8e958e; box-shadow: 0 0 0 3px rgba(99,107,100,.08); }
+    .form-hint { color: var(--faint); font-size: 9px; }
+    .form-actions { margin-top: 20px; padding-top: 15px; border-top: 1px solid var(--line); display: flex; justify-content: space-between; gap: 10px; }
+    .empty-state { min-height: 55vh; display: grid; place-items: center; text-align: center; padding: 40px; }
+    .empty-box { max-width: 440px; }
+    .empty-symbol { width: 50px; height: 50px; border: 1px solid #d7d8d1; border-radius: 13px; display: grid; place-items: center; margin: 0 auto 17px; color: var(--accent); background: #fff; font-family: Georgia, serif; font-size: 24px; }
+    .empty-box h2 { margin: 0 0 7px; font-family: Georgia, serif; font-weight: 500; font-size: 25px; }
+    .empty-box p { margin: 0 0 18px; color: var(--muted); font-size: 11px; }
 
-    @keyframes fadeIn { from { opacity: 0 } to { opacity: 1 } }
-    @keyframes slideIn { from { transform: translateY(10px); opacity: .5 } to { transform: translateY(0); opacity: 1 } }
-    @media (max-width: 980px) {
-      .app { grid-template-columns: 76px 1fr; }
-      .sidebar { padding-left: 11px; padding-right: 11px; }
-      .brand { padding-left: 13px; }
-      .brand span, .nav-label, .nav button > span:not(.nav-icon):not(.nav-count), .storage-note, .profile-info, .nav-count { display: none; }
-      .nav button { justify-content: center; padding: 11px 0; }
-      .profile { justify-content: center; }
-      .workspace { grid-template-columns: 1fr; }
-      .right-stack { grid-template-columns: 1fr 1fr; }
+    .dialog-backdrop { position: fixed; inset: 0; z-index: 100; display: none; align-items: center; justify-content: center; padding: 20px; background: rgba(20,23,21,.62); }
+    .dialog-backdrop.open { display: flex; }
+    .dialog { width: min(520px,100%); max-height: 90vh; overflow: auto; background: #fff; border-radius: 12px; box-shadow: var(--shadow); }
+    .dialog-head { padding: 20px 22px 15px; border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; gap: 16px; }
+    .dialog-kicker { color: var(--accent); font-size: 8px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; margin-bottom: 5px; }
+    .dialog h2 { margin: 0; font-family: Georgia, serif; font-size: 23px; font-weight: 500; }
+    .dialog-close { border: 0; background: transparent; color: var(--muted); font-size: 20px; padding: 0 4px; }
+    .dialog form { padding: 20px 22px 22px; }
+    .dialog-copy { color: var(--muted); font-size: 10px; margin: 0 0 16px; }
+    .dialog-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 18px; }
+    .toast { position: fixed; z-index: 120; right: 22px; bottom: 22px; padding: 11px 14px; border-radius: 8px; background: #252925; color: #fff; box-shadow: var(--shadow); font-size: 10px; opacity: 0; transform: translateY(12px); pointer-events: none; transition: opacity .18s ease,transform .18s ease; }
+    .toast.show { opacity: 1; transform: translateY(0); }
+
+    @media (max-width: 1100px) {
+      .app { grid-template-columns: 218px minmax(0,1fr); }
+      .workspace { grid-template-columns: 210px minmax(0,1fr); }
+      .surface-inner { padding-left: 22px; padding-right: 22px; }
+      .editor-grid { grid-template-columns: minmax(0,1fr) 220px; }
+    }
+    @media (max-width: 900px) {
+      .app { grid-template-columns: 68px minmax(0,1fr); }
+      .brand { padding: 0; justify-content: center; }
+      .brand span, .rail-head, .project-button > div:last-child, .rail-foot { display: none; }
+      .project-list { padding: 13px 8px; }
+      .project-button { display: flex; justify-content: center; padding: 8px; }
+      .project-icon { flex: 0 0 31px; width: 31px; height: 31px; }
+      .editor-grid { grid-template-columns: 1fr; }
+      .side-stack { grid-template-columns: repeat(2,minmax(0,1fr)); }
+      .rail-collapse { display: none; }
     }
     @media (max-width: 700px) {
       .app { display: block; }
-      .sidebar { position: fixed; left: -260px; width: 236px; z-index: 60; transition: left .2s; box-shadow: var(--shadow); }
-      .sidebar.open { left: 0; }
-      .sidebar .brand span, .sidebar .nav-label, .sidebar .nav button > span:not(.nav-icon):not(.nav-count), .sidebar .storage-note, .sidebar .profile-info, .sidebar .nav-count { display: initial; }
-      .sidebar .nav button { justify-content: flex-start; padding: 10px 11px; }
-      .mobile-toggle { display: grid; }
-      .topbar { height: 64px; padding: 0 17px; }
-      .crumb { display: none; }
-      .search input { width: min(48vw, 210px); }
-      .content { padding: 28px 17px 45px; }
-      .metrics { grid-template-columns: 1fr 1fr; }
-      .record-grid { grid-template-columns: 1fr; }
-      .list-row { grid-template-columns: 32px minmax(0,1fr) 68px 28px; }
-      .list-row .status { display: none; }
-      .right-stack { grid-template-columns: 1fr; }
-      .form-grid { grid-template-columns: 1fr; }
+      .project-rail { position: fixed; z-index: 80; top: 0; bottom: 0; left: -270px; width: 248px; height: 100%; box-shadow: var(--shadow); transition: left .2s ease; }
+      .project-rail.open { left: 0; }
+      .project-rail .brand { padding: 0 18px; justify-content: flex-start; }
+      .project-rail .brand span, .project-rail .rail-head, .project-rail .project-button > div:last-child, .project-rail .rail-foot { display: block; }
+      .project-rail .project-button { display: grid; justify-content: initial; padding: 10px; }
+      .mobile-menu { display: grid; }
+      .topbar { padding: 0 13px; }
+      .top-right .tool-button:not(.primary) { display: none; }
+      .workspace { grid-template-columns: 176px minmax(0,1fr); }
+      .tree { padding: 14px 8px; }
+      .surface-inner { padding: 22px 14px 40px; }
+      .page-head { display: block; }
+      .head-actions { margin-top: 13px; }
+      .collection-grid, .field-grid { grid-template-columns: 1fr; }
       .field.full { grid-column: auto; }
-      .compact-grid { grid-template-columns: 1fr; }
-      .compact-grid .full { grid-column: auto; }
-      .date-chip { display: none; }
+      .side-stack { grid-template-columns: 1fr; }
     }
-    @media (max-width: 440px) {
-      .metrics { grid-template-columns: 1fr; }
-      .top-actions .primary { padding: 10px; font-size: 0; }
-      .top-actions .primary::after { content: "+"; font-size: 18px; }
-      .kbd { display: none; }
-      .search input { padding-right: 10px; }
+    @media (max-width: 520px) {
+      .workspace { display: block; overflow: auto; }
+      .tree { min-height: auto; max-height: 205px; border-right: 0; border-bottom: 1px solid #dadad3; }
+      .surface { overflow: visible; }
+      .workspace-shell { overflow: hidden; }
+      .prompt-editor { min-height: 360px; padding: 18px; font-size: 12px; }
+      .editor-toolbar { align-items: flex-start; }
+      .editor-actions { flex-wrap: wrap; justify-content: flex-end; }
+      .page-subtitle, .save-state { display: none; }
     }
   </style>
 </head>
 <body>
-  <div class="app">
-    <aside class="sidebar" id="sidebar">
-      <div class="brand"><i class="brand-mark"></i><span>PromptLab</span></div>
-      <div class="nav-label">Workspace</div>
-      <nav class="nav" id="nav">
-        <button class="active" data-view="studio"><span class="nav-icon">◇</span><span>Studio</span></button>
-        <button data-view="prompts"><span class="nav-icon">¶</span><span>Prompts</span><span class="nav-count" data-count="prompts"></span></button>
-        <button data-view="runs"><span class="nav-icon">↗</span><span>Experiment runs</span><span class="nav-count" data-count="runs"></span></button>
-        <button data-view="subjects"><span class="nav-icon">◎</span><span>Test subjects</span><span class="nav-count" data-count="subjects"></span></button>
-        <button data-view="environments"><span class="nav-icon">⌘</span><span>Environments</span><span class="nav-count" data-count="environments"></span></button>
-      </nav>
-      <div class="storage-note"><strong>Local workspace</strong>Your changes are saved automatically in this browser.<button class="clear-workspace" id="clearWorkspace">Clear everything</button></div>
-      <div class="profile"><div class="avatar">AR</div><div class="profile-info"><div class="profile-name">Alex Rivera</div><div class="profile-meta">Research lead</div></div></div>
+  <div class="app" id="app">
+    <aside class="project-rail" id="projectRail">
+      <div class="brand"><div class="brand-mark">P</div><span>PromptLab</span></div>
+      <div class="rail-head"><div class="rail-label"><span>Prompt projects</span><span id="projectCount">0</span></div><button class="new-project" id="newProject"><b>+</b><span>New prompt project</span></button><div class="project-search"><input id="projectSearch" aria-label="Search projects" placeholder="Find a project"></div></div>
+      <div class="project-list" id="projectList"></div>
+      <div class="rail-foot"><div class="local-note"><strong>Saved on this device</strong>Edits are stored automatically in this browser.</div><button class="clear-all" id="clearAll">Clear everything</button></div>
     </aside>
-
-    <main class="main">
-      <header class="topbar">
-        <button class="icon-btn mobile-toggle" id="mobileToggle" aria-label="Open navigation">☰</button>
-        <div class="crumb">Workspace&nbsp; / &nbsp;<strong id="crumb">Studio</strong></div>
-        <div class="top-actions">
-          <div class="search"><input id="search" placeholder="Search workspace" aria-label="Search workspace"/><span class="kbd">⌘K</span></div>
-          <button class="primary" id="newButton">+ New experiment</button>
-        </div>
-      </header>
-
-      <section class="content" id="content"></section>
-    </main>
+    <section class="workspace-shell">
+      <header class="topbar"><div class="top-left"><button class="tool-button mobile-menu" id="mobileMenu" aria-label="Open projects">☰</button><button class="tool-button rail-collapse" id="railCollapse" aria-label="Collapse project sidebar" title="Collapse project sidebar">«</button><div class="breadcrumb" id="breadcrumb">PromptLab</div></div><div class="top-right"><span class="save-state" id="saveState">Saved</span><button class="tool-button" id="copyPrompt">Copy prompt</button><button class="tool-button primary" id="quickAdd">+ Add child</button></div></header>
+      <div class="workspace"><nav class="tree" id="tree"></nav><main class="surface" id="surface"></main></div>
+    </section>
   </div>
-
-  <div class="modal-backdrop" id="modalBackdrop" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
-    <div class="modal">
-      <div class="modal-head">
-        <div><div class="modal-kicker" id="modalKicker">Edit record</div><h2 id="modalTitle">Experiment</h2></div>
-        <button class="close" id="closeModal" aria-label="Close">×</button>
-      </div>
-      <form id="recordForm"></form>
-    </div>
-  </div>
+  <div class="dialog-backdrop" id="dialogBackdrop" role="dialog" aria-modal="true" aria-labelledby="dialogTitle"><div class="dialog"><div class="dialog-head"><div><div class="dialog-kicker" id="dialogKicker">New project</div><h2 id="dialogTitle">Create a prompt project</h2></div><button class="dialog-close" id="dialogClose" aria-label="Close">×</button></div><form id="dialogForm"></form></div></div>
   <div class="toast" id="toast"></div>
 
   <script>
-    const STORAGE_KEY = 'promptLabWorkspaceV1';
-    const starter = {
-      prompts: [
-        { id:'p1', title:'Calm technical explainer', content:'Explain {{topic}} to a curious generalist. Lead with the practical answer, then add the minimum technical context needed. Use one concrete analogy.', tags:'explanation, clarity', owner:'Alex Rivera', updated:'2026-08-18' },
-        { id:'p2', title:'Evidence-first product critique', content:'Evaluate the proposed product decision. Separate observations from assumptions, identify the highest-risk uncertainty, and propose the smallest useful test.', tags:'critique, product', owner:'Mina Okafor', updated:'2026-08-17' },
-        { id:'p3', title:'Support reply — empathetic', content:'Draft a concise support response that acknowledges the issue, states what we know, offers a clear next step, and avoids overpromising.', tags:'support, tone', owner:'Alex Rivera', updated:'2026-08-12' },
-        { id:'p4', title:'Structured meeting synthesis', content:'Turn these meeting notes into decisions, unresolved questions, owners, and dated next actions. Preserve uncertainty where it exists.', tags:'operations, summary', owner:'Jules Martin', updated:'2026-08-08' }
-      ],
-      subjects: [
-        { id:'s1', title:'GPT-5 · balanced', type:'Language model', description:'Default reasoning profile with concise response preference.', traits:'balanced, concise, tool-enabled', version:'2026-08-12', updated:'2026-08-18' },
-        { id:'s2', title:'GPT-5 · deep reasoning', type:'Language model', description:'Higher deliberation budget for complex analytical tasks.', traits:'analytical, thorough', version:'2026-08-12', updated:'2026-08-17' },
-        { id:'s3', title:'Human review panel', type:'Evaluator group', description:'Five product specialists rating clarity, correctness, and trust.', traits:'expert, qualitative', version:'Panel B', updated:'2026-08-15' }
-      ],
-      environments: [
-        { id:'e1', title:'Production sandbox', type:'API environment', description:'Isolated mirror of production tools with synthetic customer data.', config:'Temperature 0.4 · 8k output · Tools on', updated:'2026-08-18' },
-        { id:'e2', title:'Deterministic baseline', type:'API environment', description:'Low-variance configuration used for regression comparisons.', config:'Temperature 0.0 · Seed 42 · Tools off', updated:'2026-08-15' },
-        { id:'e3', title:'Human interview room', type:'Qualitative setting', description:'Moderated 30-minute remote session with screen recording.', config:'Zoom · Think-aloud protocol', updated:'2026-08-11' }
-      ],
-      runs: [
-        { id:'r1', title:'Clarity under ambiguity', promptId:'p1', subjectId:'s1', environmentId:'e1', hypothesis:'Adding an explicit audience and a concrete analogy will improve first-pass comprehension.', result:'Participants located the practical answer faster. Analogies helped on abstract topics but occasionally reduced precision.', status:'completed', score:92, notes:'Keep the audience instruction. Add a clause asking the model to mark analogy limits.', updated:'2026-08-18' },
-        { id:'r2', title:'Decision critique — tools off', promptId:'p2', subjectId:'s2', environmentId:'e2', hypothesis:'The evidence-first structure will reduce unsupported recommendations.', result:'', status:'running', score:78, notes:'3 of 5 batches complete.', updated:'2026-08-18' },
-        { id:'r3', title:'Support tone calibration', promptId:'p3', subjectId:'s3', environmentId:'e3', hypothesis:'Explicitly avoiding overpromising increases trust without lowering warmth.', result:'Panel preferred the revised response 4:1 and rated it more trustworthy.', status:'completed', score:87, notes:'Test again with billing-related complaints.', updated:'2026-08-16' },
-        { id:'r4', title:'Long-note synthesis', promptId:'p4', subjectId:'s1', environmentId:'e1', hypothesis:'An explicit output schema improves action capture in long meetings.', result:'', status:'draft', score:0, notes:'Need a representative transcript over 10k tokens.', updated:'2026-08-14' },
-        { id:'r5', title:'Analogy boundary test', promptId:'p1', subjectId:'s2', environmentId:'e2', hypothesis:'Stating where an analogy breaks will preserve accuracy.', result:'Precision improved, but answers became 18% longer.', status:'completed', score:84, notes:'Try a one-sentence boundary limit.', updated:'2026-08-13' }
-      ]
-    };
-
-    let state = loadState();
-    let currentView = 'studio';
-    let currentFilter = 'all';
-    let query = '';
-
-    const $ = (s, root=document) => root.querySelector(s);
-    const $$ = (s, root=document) => [...root.querySelectorAll(s)];
-    const labels = { studio:'Studio', prompts:'Prompts', runs:'Experiment runs', subjects:'Test subjects', environments:'Environments' };
-    const singular = { prompts:'Prompt', runs:'Experiment', subjects:'Test subject', environments:'Environment' };
-
-    function loadState(){
-      try { const saved = JSON.parse(localStorage.getItem(STORAGE_KEY)); return saved && saved.runs ? saved : structuredClone(starter); }
-      catch { return structuredClone(starter); }
+    const STORE='promptLabProjectsV3';
+    const seed={projects:[
+      {id:'pr_support',title:'Trustworthy support replies',updated:'2026-08-19',prompt:'You are a customer support specialist. Draft a concise response to {{customer_message}}.\n\nYour response must:\n- acknowledge the specific problem without repeating it verbatim\n- distinguish confirmed facts from assumptions\n- offer one clear next step\n- avoid promises about timing unless a verified estimate is provided\n\nTone: calm, direct, and human. Keep the response under {{word_limit}} words.',notes:'Primary prompt for support-answer quality work. Preserve the distinction between empathy and certainty.',children:[{id:'ch_bill',title:'Billing escalation',prompt:'Use the parent prompt. If the message concerns an unexpected charge, ask for the transaction date and last four digits before suggesting a resolution. Never request full payment details.',notes:'Narrow child for payment-related tickets.',updated:'2026-08-18'},{id:'ch_outage',title:'Service outage',prompt:'Use the parent prompt. When an active incident is confirmed, name the affected service, link the status page, and provide the next scheduled update time.',notes:'Only use when incident status is verified.',updated:'2026-08-17'}],subjects:[{id:'su_gpt',title:'GPT-5 · balanced',type:'Language model',details:'Default reasoning profile; concise response preference.',version:'2026-08-12',updated:'2026-08-19'},{id:'su_panel',title:'Support specialist panel',type:'Human evaluator group',details:'Four senior support agents scoring warmth, accuracy, and next-step clarity.',version:'Panel A',updated:'2026-08-16'}],environments:[{id:'en_sandbox',title:'Production sandbox',type:'API environment',config:'Temperature 0.4 · tools on · synthetic customer data',details:'Mirrors the production orchestration layer without live customer records.',updated:'2026-08-19'},{id:'en_base',title:'Deterministic baseline',type:'API environment',config:'Temperature 0 · seed 42 · tools off',details:'Stable regression baseline for prompt comparisons.',updated:'2026-08-15'}],results:[{id:'re_bill',title:'Billing complaint benchmark',subjectId:'su_gpt',environmentId:'en_sandbox',score:91,outcome:'The prompt produced a clear next action in 46 of 50 cases. It avoided unsupported refund promises in every case.',notes:'Two responses sounded procedural. Test a shorter tone clause.',updated:'2026-08-19'},{id:'re_panel',title:'Trust and warmth review',subjectId:'su_panel',environmentId:'en_base',score:86,outcome:'Panelists preferred the revised prompt 4:0 and consistently rated it more trustworthy.',notes:'Revisit the word limit for complex account issues.',updated:'2026-08-16'}]},
+      {id:'pr_brief',title:'Decision brief writer',updated:'2026-08-15',prompt:'Turn {{source_material}} into a decision brief for {{audience}}.\n\nStructure:\n1. Decision required\n2. What the evidence supports\n3. Material uncertainties\n4. Options and trade-offs\n5. Recommended next action\n\nDo not manufacture consensus. Label every inference.',notes:'Used for weekly product and operations reviews.',children:[{id:'ch_exec',title:'Executive version',prompt:'Apply the parent prompt, then limit the final brief to 350 words and put the recommendation first.',notes:'For senior leadership circulation.',updated:'2026-08-14'}],subjects:[{id:'su_deep',title:'GPT-5 · deep reasoning',type:'Language model',details:'Higher deliberation budget for ambiguous evidence.',version:'2026-08-12',updated:'2026-08-15'}],environments:[{id:'en_docs',title:'Document workspace',type:'Tool-enabled environment',config:'Document search on · citations required',details:'Access to the scoped project document set.',updated:'2026-08-15'}],results:[{id:'re_accuracy',title:'Inference-labeling review',subjectId:'su_deep',environmentId:'en_docs',score:88,outcome:'Unsupported statements fell from 12% to 3% across the review set.',notes:'Keep the explicit inference instruction.',updated:'2026-08-15'}]}
+    ]};
+    let state=load(),projectId=state.projects[0]?.id||null,selection={type:'prompt',id:null},search='',saveTimer;
+    let railCollapsed=localStorage.getItem('promptLabRailCollapsed')==='1';
+    const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>[...r.querySelectorAll(s)];
+    function load(){
+      try{
+        const current=JSON.parse(localStorage.getItem(STORE));
+        if(current?.projects)return normalize(current);
+        const old=JSON.parse(localStorage.getItem('promptLabWorkspaceV1'));
+        if(old?.prompts?.length){const migrated=migrateOldWorkspace(old);localStorage.setItem(STORE,JSON.stringify(migrated));return migrated}
+        return structuredClone(seed);
+      }catch{return structuredClone(seed)}
     }
-    function saveState(message='Changes saved'){
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-      updateCounts(); toast(message);
+    function migrateOldWorkspace(old){
+      const projects=old.prompts.map(promptRecord=>{
+        const linked=(old.runs||[]).filter(r=>r.promptId===promptRecord.id);
+        const subjectIds=new Set(linked.map(r=>r.subjectId));
+        const environmentIds=new Set(linked.map(r=>r.environmentId));
+        return {id:uid('pr'),title:promptRecord.title,prompt:promptRecord.content,notes:[promptRecord.tags&&`Tags: ${promptRecord.tags}`,promptRecord.owner&&`Owner: ${promptRecord.owner}`].filter(Boolean).join('\n'),updated:promptRecord.updated||today(),children:[],subjects:(old.subjects||[]).filter(s=>subjectIds.has(s.id)).map(s=>({id:s.id,title:s.title,type:s.type,details:s.description||s.traits||'',version:s.version||'',updated:s.updated||today()})),environments:(old.environments||[]).filter(e=>environmentIds.has(e.id)).map(e=>({id:e.id,title:e.title,type:e.type,config:e.config||'',details:e.description||'',updated:e.updated||today()})),results:linked.map(r=>({id:r.id,title:r.title,subjectId:r.subjectId,environmentId:r.environmentId,score:r.score||0,outcome:r.result||'',notes:[r.hypothesis&&`Hypothesis: ${r.hypothesis}`,r.notes].filter(Boolean).join('\n'),updated:r.updated||today()}))};
+      });
+      return normalize({projects});
     }
-    function esc(v=''){ return String(v).replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c])); }
-    function today(){ return new Date().toISOString().slice(0,10); }
-    function humanDate(v){ return new Date(v+'T12:00:00').toLocaleDateString(undefined,{month:'short',day:'numeric'}); }
-    function byId(type,id){ return state[type].find(x=>x.id===id); }
-    function uid(prefix){ return prefix + Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
-    function toast(message){ const el=$('#toast'); el.textContent=message; el.classList.add('show'); clearTimeout(toast.timer); toast.timer=setTimeout(()=>el.classList.remove('show'),1800); }
-    function updateCounts(){ $$('[data-count]').forEach(el=>el.textContent=state[el.dataset.count].length); }
-    function match(item){ return !query || Object.values(item).join(' ').toLowerCase().includes(query); }
-
-    function render(){
-      $('#crumb').textContent=labels[currentView];
-      $$('#nav button').forEach(b=>b.classList.toggle('active',b.dataset.view===currentView));
-      $('#newButton').textContent = currentView==='studio' || currentView==='runs' ? '+ New experiment' : '+ New '+singular[currentView].toLowerCase();
-      $('#content').innerHTML = currentView==='studio' ? studioView() : collectionView(currentView);
-      bindViewEvents(); updateCounts();
-    }
-
-    function studioView(){
-      const complete=state.runs.filter(r=>r.status==='completed');
-      const avg=complete.length ? Math.round(complete.reduce((a,r)=>a+(+r.score||0),0)/complete.length) : 0;
-      const filtered=state.runs.filter(match).filter(r=>currentFilter==='all'||r.status===currentFilter);
-      return `
-        <div class="heading-row"><div><h1>Experiment studio</h1><p class="subtitle">Design better prompts through structured, repeatable observation.</p></div><div class="date-chip">Updated ${new Date().toLocaleDateString(undefined,{month:'long',day:'numeric',year:'numeric'})}</div></div>
-        <div class="metrics">
-          <div class="metric" style="--metric-color:var(--accent-soft)"><div class="metric-label">Total experiments <span>↗</span></div><div class="metric-value">${state.runs.length}<span class="metric-delta">+2 this week</span></div></div>
-          <div class="metric" style="--metric-color:var(--green-soft)"><div class="metric-label">Completed <span>✓</span></div><div class="metric-value">${complete.length}<span class="metric-delta">${state.runs.length ? Math.round(complete.length/state.runs.length*100) : 0}%</span></div></div>
-          <div class="metric" style="--metric-color:var(--blue-soft)"><div class="metric-label">Average score <span>◌</span></div><div class="metric-value">${avg}<span class="metric-delta">/ 100</span></div></div>
-          <div class="metric" style="--metric-color:var(--amber-soft)"><div class="metric-label">Prompt library <span>¶</span></div><div class="metric-value">${state.prompts.length}<span class="metric-delta">active</span></div></div>
-        </div>
-        <div class="workspace">
-          <div class="card">
-            <div class="card-head"><div class="card-title">Recent experiments</div><div class="segmented">${['all','running','completed','draft'].map(x=>`<button data-filter="${x}" class="${currentFilter===x?'active':''}">${x[0].toUpperCase()+x.slice(1)}</button>`).join('')}</div></div>
-            <div class="list">${filtered.length ? filtered.map((r,i)=>runRow(r,i)).join('') : `<div class="empty"><strong>No experiments found</strong>Try another filter or create a new experiment.</div>`}</div>
-          </div>
-          <div class="right-stack">
-            <div class="card scorecard">
-              <div class="scorecard-top"><div class="scorecard-title">Quality signal</div><small>COMPLETED RUNS</small></div>
-              <div class="big-score"><strong>${avg}</strong><span>/ 100 average</span></div><div class="bar"><i style="width:${avg}%"></i></div>
-              <div class="dimension"><span>Clarity</span><b>${Math.min(98,avg+5)}</b><div class="mini-bar"><i style="width:${Math.min(98,avg+5)}%"></i></div></div>
-              <div class="dimension"><span>Correctness</span><b>${Math.max(0,avg-2)}</b><div class="mini-bar"><i style="width:${Math.max(0,avg-2)}%"></i></div></div>
-              <div class="dimension"><span>Usefulness</span><b>${Math.min(99,avg+1)}</b><div class="mini-bar"><i style="width:${Math.min(99,avg+1)}%"></i></div></div>
-            </div>
-            <div class="card"><div class="card-head"><div class="card-title">Recent activity</div><small style="color:var(--faint);font-size:9px">AUTO-SAVED</small></div><div class="activity">
-              ${state.runs.slice(0,3).map(r=>`<div class="activity-item"><strong>${esc(r.title)}</strong><br>${r.status==='completed'?'Results recorded':'Experiment updated'} · ${humanDate(r.updated)}</div>`).join('')}
-            </div></div>
-          </div>
-        </div>`;
-    }
-
-    function runRow(r,i){
-      const p=byId('prompts',r.promptId), s=byId('subjects',r.subjectId);
-      return `<div class="list-row" data-edit="runs" data-id="${r.id}"><div class="run-index">${String(i+1).padStart(2,'0')}</div><div><div class="run-title">${esc(r.title)}</div><div class="run-meta">${esc(p?.title||'No prompt')} · ${esc(s?.title||'No subject')}</div></div><span class="status ${r.status}">${r.status}</span><div class="score"><strong>${r.score||'—'}</strong><span>score</span></div><button class="more" aria-label="Edit">···</button></div>`;
-    }
-
-    function collectionView(type){
-      const records=state[type].filter(match);
-      const subtitles={
-        prompts:'Reusable instructions, variables, and framing for every study.',
-        runs:'Hypotheses, configurations, observations, and measured outcomes.',
-        subjects:'Models, people, or systems being evaluated in your experiments.',
-        environments:'The conditions, tools, and settings where tests are performed.'
-      };
-      return `<div class="heading-row"><div><h1>${labels[type]}</h1><p class="subtitle">${subtitles[type]}</p></div><div class="date-chip">${records.length} ${records.length===1?'record':'records'}</div></div>
-        ${type==='runs' ? `<div class="card"><div class="list">${records.length?records.map((r,i)=>runRow(r,i)).join(''):`<div class="empty"><strong>No experiments found</strong>Create your first structured test.</div>`}</div></div>` : `<div class="record-grid">${records.length?records.map(r=>recordCard(type,r)).join(''):`<div class="empty"><strong>No ${labels[type].toLowerCase()} found</strong>Create a record to get started.</div>`}</div>`}`;
-    }
-
-    function recordCard(type,r){
-      const desc=type==='prompts'?r.content:r.description;
-      const meta=type==='prompts'?r.tags:(type==='subjects'?r.traits:r.config);
-      return `<article class="record-card" data-edit="${type}" data-id="${r.id}"><div class="record-type">${esc(type==='subjects'?r.type:type==='environments'?r.type:'Prompt template')}</div><h3>${esc(r.title)}</h3><p>${esc(desc)}</p><div class="record-foot"><span>${esc(meta||'No details')}</span><span>${humanDate(r.updated)}</span></div></article>`;
-    }
-
-    const fields={
-      prompts:[['title','Title','text','full'],['owner','Owner','text',''],['tags','Tags','text',''],['content','Prompt content','textarea','full']],
-      subjects:[['title','Subject name','text','full'],['type','Subject type','text',''],['version','Version / cohort','text',''],['traits','Traits','text','full'],['description','Description','textarea','full']],
-      environments:[['title','Environment name','text','full'],['type','Environment type','text',''],['config','Configuration','text',''],['description','Description','textarea','full']],
-      runs:[['title','Experiment title','text','full'],['promptId','Prompt','promptSelect',''],['subjectId','Test subject','subjectSelect',''],['environmentId','Environment','environmentSelect',''],['status','Status','statusSelect',''],['score','Score (0–100)','number',''],['hypothesis','Hypothesis','textarea','full'],['result','Experimental result','textarea','full'],['notes','Notes & next step','textarea','full']]
-    };
-
-    function openNewExperiment(){
-      const hasPrompts=state.prompts.length>0, hasSubjects=state.subjects.length>0, hasEnvironments=state.environments.length>0;
-      $('#modalKicker').textContent='Guided setup';
-      $('#modalTitle').textContent='New experiment';
-      $('#recordForm').innerHTML=`
-        <p class="setup-intro">Set up the test in one place. The experiment starts as a draft, so results, score, and final status can be decided after you run it.</p>
-        <section class="setup-section">
-          <div class="step-index">1</div><div class="setup-body"><h3>Name the experiment</h3><p>Give this run a clear, searchable name and optionally state what you expect to learn.</p>
-            <div class="compact-grid"><div class="field full"><label>Experiment title</label><input name="title" required autofocus placeholder="e.g. Concise answer calibration" /></div><div class="field full"><label>Hypothesis <span style="font-weight:400;color:var(--faint)">(optional)</span></label><textarea name="hypothesis" placeholder="What outcome do you expect, and why?"></textarea></div></div>
-          </div>
-        </section>
-        <section class="setup-section">
-          <div class="step-index">2</div><div class="setup-body"><h3>Configure the prompt</h3><p>Write a prompt for this experiment or reuse one from your library.</p>
-            <input type="hidden" name="promptMode" value="new" />
-            <div class="mode-switch"><button type="button" class="active" data-mode-group="prompt" data-mode="new">Write new</button><button type="button" data-mode-group="prompt" data-mode="existing" ${hasPrompts?'':'disabled'}>Choose existing</button></div>
-            <div class="setup-panel" id="prompt-new"><div class="compact-grid"><div class="field full"><label>Prompt title</label><input name="newPromptTitle" data-requires placeholder="e.g. Calm technical explainer" /></div><div class="field full"><label>Prompt instructions</label><textarea name="newPromptContent" data-requires placeholder="Write the complete prompt to test…"></textarea></div></div></div>
-            <div class="setup-panel hidden" id="prompt-existing"><div class="field"><label>Prompt library</label><select name="promptId">${state.prompts.length?state.prompts.map(p=>`<option value="${p.id}">${esc(p.title)}</option>`).join(''):'<option value="">No saved prompts yet</option>'}</select></div></div>
-          </div>
-        </section>
-        <section class="setup-section">
-          <div class="step-index">3</div><div class="setup-body"><h3>Choose the test subject</h3><p>The current default is selected. You can also create and attach a new subject without leaving this setup.</p>
-            <input type="hidden" name="subjectMode" value="${hasSubjects?'existing':'new'}" />
-            <div class="mode-switch"><button type="button" class="${hasSubjects?'active':''}" data-mode-group="subject" data-mode="existing" ${hasSubjects?'':'disabled'}>Use default</button><button type="button" class="${hasSubjects?'':'active'}" data-mode-group="subject" data-mode="new">Create new</button></div>
-            <div class="setup-panel ${hasSubjects?'':'hidden'}" id="subject-existing"><div class="field"><label>Test subject</label><select name="subjectId">${state.subjects.map(s=>`<option value="${s.id}">${esc(s.title)} · ${esc(s.type)}</option>`).join('')}</select></div></div>
-            <div class="setup-panel ${hasSubjects?'hidden':''}" id="subject-new"><div class="compact-grid"><div class="field"><label>Subject name</label><input name="newSubjectTitle" data-requires placeholder="e.g. GPT-5 · concise" /></div><div class="field"><label>Subject type</label><input name="newSubjectType" data-requires placeholder="Language model, panel…" /></div><div class="field full"><label>Description <span style="font-weight:400;color:var(--faint)">(optional)</span></label><textarea name="newSubjectDescription" placeholder="Relevant traits or evaluation context"></textarea></div></div></div>
-          </div>
-        </section>
-        <section class="setup-section">
-          <div class="step-index">4</div><div class="setup-body"><h3>Choose the environment</h3><p>The current default is prefilled. Create a new environment here when the test needs different conditions.</p>
-            <input type="hidden" name="environmentMode" value="${hasEnvironments?'existing':'new'}" />
-            <div class="mode-switch"><button type="button" class="${hasEnvironments?'active':''}" data-mode-group="environment" data-mode="existing" ${hasEnvironments?'':'disabled'}>Use default</button><button type="button" class="${hasEnvironments?'':'active'}" data-mode-group="environment" data-mode="new">Create new</button></div>
-            <div class="setup-panel ${hasEnvironments?'':'hidden'}" id="environment-existing"><div class="field"><label>Environment</label><select name="environmentId">${state.environments.map(e=>`<option value="${e.id}">${esc(e.title)} · ${esc(e.type)}</option>`).join('')}</select></div></div>
-            <div class="setup-panel ${hasEnvironments?'hidden':''}" id="environment-new"><div class="compact-grid"><div class="field"><label>Environment name</label><input name="newEnvironmentTitle" data-requires placeholder="e.g. Production sandbox" /></div><div class="field"><label>Environment type</label><input name="newEnvironmentType" data-requires placeholder="API environment…" /></div><div class="field full"><label>Configuration <span style="font-weight:400;color:var(--faint)">(optional)</span></label><textarea name="newEnvironmentConfig" placeholder="Model settings, tools, protocol, constraints…"></textarea></div></div></div>
-          </div>
-        </section>
-        <div class="deferred-note"><b>✓</b><span><strong>Ready as a draft.</strong> Add observations, results, score, and final status when the experiment has been run.</span></div>
-        <div class="modal-actions"><div></div><div class="action-group"><button type="button" class="secondary" id="cancelModal">Cancel</button><button class="primary" type="submit">Create experiment</button></div></div>`;
-
-      function setMode(group,mode){
-        const form=$('#recordForm');
-        form.elements[group+'Mode'].value=mode;
-        $$(`[data-mode-group="${group}"]`,form).forEach(b=>b.classList.toggle('active',b.dataset.mode===mode));
-        ['new','existing'].forEach(name=>{
-          const panel=$(`#${group}-${name}`);
-          panel.classList.toggle('hidden',name!==mode);
-          $$('[data-requires]',panel).forEach(input=>input.required=name===mode);
-          $$('select',panel).forEach(input=>input.required=name===mode);
-        });
-      }
-      ['prompt','subject','environment'].forEach(group=>setMode(group,$('#recordForm').elements[group+'Mode'].value));
-      $$('[data-mode-group]',$('#recordForm')).forEach(button=>button.onclick=()=>{if(!button.disabled)setMode(button.dataset.modeGroup,button.dataset.mode);});
-
-      $('#modalBackdrop').classList.add('open'); document.body.style.overflow='hidden';
-      $('#cancelModal').onclick=closeModal;
-      $('#recordForm').onsubmit=e=>{
-        e.preventDefault(); const data=Object.fromEntries(new FormData(e.target)); const date=today();
-        let promptId=data.promptId, subjectId=data.subjectId, environmentId=data.environmentId;
-        if(data.promptMode==='new'){
-          promptId=uid('p'); state.prompts.unshift({id:promptId,title:data.newPromptTitle,content:data.newPromptContent,tags:'experiment prompt',owner:'Alex Rivera',updated:date});
-        }
-        if(data.subjectMode==='new'){
-          subjectId=uid('s'); state.subjects.unshift({id:subjectId,title:data.newSubjectTitle,type:data.newSubjectType,description:data.newSubjectDescription,traits:'',version:'',updated:date});
-        }
-        if(data.environmentMode==='new'){
-          environmentId=uid('e'); state.environments.unshift({id:environmentId,title:data.newEnvironmentTitle,type:data.newEnvironmentType,description:'Created during experiment setup.',config:data.newEnvironmentConfig,updated:date});
-        }
-        state.runs.unshift({id:uid('r'),title:data.title,promptId,subjectId,environmentId,hypothesis:data.hypothesis,result:'',status:'draft',score:0,notes:'',updated:date});
-        saveState('Experiment and configuration saved'); closeModal(); render();
-      };
-    }
-
-    function openModal(type,id){
-      if(type==='runs' && !id){ openNewExperiment(); return; }
-      const item=id?byId(type,id):{};
-      $('#modalKicker').textContent=id?'Edit record':'Create record';
-      $('#modalTitle').textContent=id?(item.title||singular[type]):'New '+singular[type].toLowerCase();
-      const controls=fields[type].map(([key,label,kind,width])=>{
-        let control=''; const val=item[key]??'';
-        if(kind==='textarea') control=`<textarea name="${key}" ${key==='content'||key==='hypothesis'?'required':''}>${esc(val)}</textarea>`;
-        else if(kind.endsWith('Select')){
-          const options=kind==='statusSelect' ? [['draft','Draft'],['running','Running'],['completed','Completed']] : state[kind.replace('Select','')+'s'].map(x=>[x.id,x.title]);
-          control=`<select name="${key}" required>${options.map(([v,t])=>`<option value="${esc(v)}" ${v===val?'selected':''}>${esc(t)}</option>`).join('')}</select>`;
-        } else control=`<input name="${key}" type="${kind}" value="${esc(val)}" ${kind==='number'?'min="0" max="100"':''} ${key==='title'?'required autofocus':''}/>`;
-        return `<div class="field ${width}"><label>${label}</label>${control}</div>`;
-      }).join('');
-      $('#recordForm').innerHTML=`<div class="form-grid">${controls}</div><div class="modal-actions"><div>${id?'<button type="button" class="danger" id="deleteRecord">Delete</button>':''}</div><div class="action-group">${id?'<button type="button" class="secondary" id="duplicateRecord">Duplicate</button>':''}<button type="button" class="secondary" id="cancelModal">Cancel</button><button class="primary" type="submit">Save ${singular[type].toLowerCase()}</button></div></div>`;
-      $('#modalBackdrop').classList.add('open'); document.body.style.overflow='hidden';
-      $('#recordForm').onsubmit=e=>{ e.preventDefault(); const data=Object.fromEntries(new FormData(e.target)); if('score'in data)data.score=Math.max(0,Math.min(100,Number(data.score)||0)); data.updated=today(); if(id) Object.assign(item,data); else {data.id=uid(type[0]); state[type].unshift(data);} saveState(id?'Record updated':'Record created'); closeModal(); render(); };
-      $('#cancelModal').onclick=closeModal;
-      if(id){
-        $('#duplicateRecord').onclick=()=>{ const copy={...item,id:uid(type[0]),title:item.title+' — copy',updated:today()}; state[type].unshift(copy); saveState('Record duplicated'); closeModal(); render(); };
-        $('#deleteRecord').onclick=()=>deleteRecord(type,id);
-      }
-    }
-
-    function deleteRecord(type,id){
-      if(!confirm(`Delete this ${singular[type].toLowerCase()}? This cannot be undone.`)) return;
-      state[type]=state[type].filter(x=>x.id!==id);
-      if(type==='prompts') state.runs.forEach(r=>{if(r.promptId===id)r.promptId=''});
-      if(type==='subjects') state.runs.forEach(r=>{if(r.subjectId===id)r.subjectId=''});
-      if(type==='environments') state.runs.forEach(r=>{if(r.environmentId===id)r.environmentId=''});
-      saveState('Record deleted'); closeModal(); render();
-    }
-
-    function clearEverything(){
-      const total=state.prompts.length+state.runs.length+state.subjects.length+state.environments.length;
-      if(!total){ toast('Workspace is already empty'); return; }
-      if(!confirm(`Clear all ${total} workspace records? Every prompt, experiment, test subject, environment, and result will be permanently removed.`)) return;
-      state={prompts:[],runs:[],subjects:[],environments:[]};
-      currentView='studio'; currentFilter='all'; query=''; $('#search').value='';
-      saveState('Workspace cleared'); render();
-    }
-
-    function closeModal(){ $('#modalBackdrop').classList.remove('open'); document.body.style.overflow=''; }
-    function bindViewEvents(){
-      $$('[data-filter]').forEach(b=>b.onclick=()=>{currentFilter=b.dataset.filter;render();});
-      $$('[data-edit]').forEach(el=>el.onclick=e=>{e.stopPropagation();openModal(el.dataset.edit,el.dataset.id);});
-    }
-    $$('#nav button').forEach(b=>b.onclick=()=>{currentView=b.dataset.view;currentFilter='all';$('#sidebar').classList.remove('open');render();});
-    $('#newButton').onclick=()=>openModal(currentView==='studio'?'runs':currentView);
-    $('#clearWorkspace').onclick=clearEverything;
-    $('#closeModal').onclick=closeModal;
-    $('#modalBackdrop').onclick=e=>{if(e.target===e.currentTarget)closeModal();};
-    $('#mobileToggle').onclick=()=>$('#sidebar').classList.toggle('open');
-    $('#search').oninput=e=>{query=e.target.value.trim().toLowerCase();render();};
-    document.addEventListener('keydown',e=>{
-      if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='k'){e.preventDefault();$('#search').focus();}
-      if(e.key==='Escape')closeModal();
-    });
-    render();
+    function normalize(data){data.projects.forEach(p=>{p.children||=[];p.subjects||=[];p.environments||=[];p.results||=[];p.notes||=''});return data}
+    function project(){return state.projects.find(p=>p.id===projectId)}
+    function uid(prefix){return prefix+'_'+Date.now().toString(36)+Math.random().toString(36).slice(2,6)}
+    function today(){return new Date().toISOString().slice(0,10)}
+    function esc(v=''){return String(v).replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]))}
+    function human(v){return v?new Date(v+'T12:00:00').toLocaleDateString(undefined,{month:'short',day:'numeric'}):'Today'}
+    function save(immediate=false){const indicator=$('#saveState');if(indicator){indicator.textContent='Saving…';indicator.classList.add('saving')}clearTimeout(saveTimer);const commit=()=>{localStorage.setItem(STORE,JSON.stringify(state));if(indicator){indicator.textContent='Saved';indicator.classList.remove('saving')}};immediate?commit():saveTimer=setTimeout(commit,320)}
+    function toast(message){const el=$('#toast');el.textContent=message;el.classList.add('show');clearTimeout(toast.timer);toast.timer=setTimeout(()=>el.classList.remove('show'),1700)}
+    function variables(text){return [...new Set([...String(text||'').matchAll(/{{\s*([^{}]+?)\s*}}/g)].map(m=>m[1].trim()))]}
+    function wordCount(text){return String(text||'').trim()?String(text).trim().split(/\s+/).length:0}
+    function collectionKey(type){return type==='child'?'children':type+'s'}
+    function itemsFor(p,type){return p[collectionKey(type)]}
+    function currentItem(){const p=project();if(!p||selection.type==='prompt'||selection.type==='folder')return p;return itemsFor(p,selection.type)?.find(x=>x.id===selection.id)}
+    function folderName(type){return ({child:'Child prompts',subject:'Test subjects',result:'Test results',environment:'Environments'})[type]||type}
+    function singular(type){return ({child:'child',subject:'subject',result:'result',environment:'environment'})[type]||type}
+    const folders=[['child','Child prompts'],['subject','Test subjects'],['result','Test results'],['environment','Environments']];
+    function applyRailState(){const app=$('#app'),button=$('#railCollapse');app.classList.toggle('rail-collapsed',railCollapsed);button.textContent=railCollapsed?'»':'«';button.setAttribute('aria-label',railCollapsed?'Expand project sidebar':'Collapse project sidebar');button.title=railCollapsed?'Expand project sidebar':'Collapse project sidebar'}
+    function toggleRail(){railCollapsed=!railCollapsed;localStorage.setItem('promptLabRailCollapsed',railCollapsed?'1':'0');applyRailState()}
+    function render(){renderProjects();renderTree();renderSurface();renderTopbar()}
+    function renderProjects(){const shown=state.projects.filter(p=>!search||p.title.toLowerCase().includes(search));$('#projectCount').textContent=state.projects.length;$('#projectList').innerHTML=shown.length?shown.map(p=>`<button class="project-button ${p.id===projectId?'active':''}" data-project="${p.id}"><div class="project-icon">P</div><div><div class="project-name">${esc(p.title)}</div><div class="project-meta">${p.children.length} children · ${p.results.length} results</div></div></button>`).join(''):'<div style="padding:18px 10px;color:#7f8680;font-size:10px">No prompt projects found.</div>';$$('[data-project]').forEach(b=>b.onclick=()=>{projectId=b.dataset.project;selection={type:'prompt',id:null};$('#projectRail').classList.remove('open');render()})}
+    function renderTree(){const p=project();if(!p){$('#tree').innerHTML='<div class="tree-project"><div class="tree-kicker">Workspace</div><div class="tree-title">No project selected</div></div>';return}$('#tree').innerHTML=`<div class="tree-project"><div class="tree-kicker">Prompt project</div><div class="tree-title">${esc(p.title)}</div></div><button class="tree-root ${selection.type==='prompt'?'active':''}" data-select="prompt"><span class="root-symbol">¶</span><span>Primary prompt</span></button>${folders.map(([type,label])=>folderMarkup(p,type,label)).join('')}`;$$('[data-select]').forEach(b=>b.onclick=()=>{selection={type:b.dataset.select,id:b.dataset.id||null};render()})}
+    function folderMarkup(p,type,label){const items=itemsFor(p,type);return `<div class="folder"><button class="folder-button ${selection.type==='folder'&&selection.id===type?'active':''}" data-select="folder" data-id="${type}"><span class="chevron">▾</span><span class="folder-glyph">□</span><span>${label}</span><span class="folder-count">${items.length}</span></button><div class="tree-children">${items.length?items.map(x=>`<button class="tree-item ${selection.type===type&&selection.id===x.id?'active':''}" data-select="${type}" data-id="${x.id}"><i class="file-dot"></i><span>${esc(x.title)}</span></button>`).join(''):'<div class="tree-empty">Empty</div>'}</div></div>`}
+    function renderTopbar(){const p=project(),item=currentItem();$('#breadcrumb').innerHTML=p?`<strong>${esc(p.title)}</strong> &nbsp;/&nbsp; ${esc(selection.type==='folder'?folderName(selection.id):selection.type==='prompt'?'Primary prompt':item?.title||'Item')}`:'PromptLab';$('#copyPrompt').disabled=!p;$('#copyPrompt').textContent=selection.type==='child'?'Copy child':'Copy prompt';$('#quickAdd').disabled=!p;$('#quickAdd').textContent=selection.type==='folder'?'+ Add '+singular(selection.id):'+ Add child'}
+    function renderSurface(){const p=project();if(!p){$('#surface').innerHTML=emptyWorkspace();bindSurface();return}if(selection.type==='prompt')$('#surface').innerHTML=promptEditor(p);else if(selection.type==='folder')$('#surface').innerHTML=collectionView(p,selection.id);else{const item=currentItem();if(!item){selection={type:'prompt',id:null};render();return}$('#surface').innerHTML=selection.type==='child'?childEditor(item):recordEditor(selection.type,item,p)}bindSurface()}
+    function emptyWorkspace(){return `<div class="empty-state"><div class="empty-box"><div class="empty-symbol">P</div><h2>Start with one prompt</h2><p>Create a prompt project, then organize its child prompts, test subjects, results, and environments underneath it.</p><button class="tool-button primary" data-new-project>Create prompt project</button></div></div>`}
+    function promptEditor(p){const vars=variables(p.prompt),avg=p.results.length?Math.round(p.results.reduce((n,r)=>n+(Number(r.score)||0),0)/p.results.length):0;return `<div class="surface-inner"><div class="page-head"><div><div class="eyebrow">Primary prompt</div><h1>${esc(p.title)}</h1><p class="page-subtitle">The source prompt for this project. Everything in the project tree belongs to this prompt.</p></div><div class="head-actions"><button class="danger-button" data-delete-project>Delete project</button></div></div><div class="editor-grid"><section class="editor-card"><div class="editor-toolbar"><span class="editor-label">PROMPT.md</span><div class="editor-actions"><button class="editor-action" data-insert-variable>+ Variable</button><button class="editor-action" data-copy-editor>Copy</button></div></div><input class="title-input" id="projectTitle" value="${esc(p.title)}" aria-label="Project title"><textarea class="prompt-editor" id="promptEditor" spellcheck="true" aria-label="Primary prompt">${esc(p.prompt)}</textarea><div class="editor-foot"><span id="editorCount">${wordCount(p.prompt)} words · ${p.prompt.length} characters</span><span>Updated ${human(p.updated)}</span></div></section><aside class="side-stack"><div class="side-card"><h3>Project map</h3><div class="stat-list"><div class="stat"><span>Child prompts</span><strong>${p.children.length}</strong></div><div class="stat"><span>Test subjects</span><strong>${p.subjects.length}</strong></div><div class="stat"><span>Results</span><strong>${p.results.length}</strong></div><div class="stat"><span>Avg. score</span><strong>${avg||'—'}</strong></div></div></div><div class="side-card"><h3>Variables</h3><div class="chip-list" id="variableList">${vars.length?vars.map(v=>`<span class="chip">{{${esc(v)}}}</span>`).join(''):'<span class="chip empty">No variables detected</span>'}</div></div><div class="side-card"><h3>Jump to</h3>${folders.map(([type,label])=>`<button class="quick-link" data-folder="${type}"><span>${label}</span><b>${itemsFor(p,type).length} →</b></button>`).join('')}</div></aside></div><div class="form-card" style="margin-top:16px"><div class="field"><label>PROJECT NOTES</label><textarea id="projectNotes" style="min-height:90px" placeholder="Context, editing principles, or reminders for this prompt…">${esc(p.notes)}</textarea></div></div></div>`}
+    function childEditor(item){const p=project(),vars=variables(item.prompt);return `<div class="surface-inner"><div class="page-head"><div><div class="eyebrow">Child prompt</div><h1>${esc(item.title)}</h1><p class="page-subtitle">A focused instruction layer beneath “${esc(p.title)}”. Use it for a narrower case without duplicating the primary prompt.</p></div></div><div class="editor-grid"><section class="editor-card"><div class="editor-toolbar"><span class="editor-label">CHILD.md</span><div class="editor-actions"><button class="editor-action" data-insert-variable>+ Variable</button><button class="editor-action" data-copy-editor>Copy</button></div></div><input class="title-input" id="itemTitle" value="${esc(item.title)}" aria-label="Child prompt title"><textarea class="prompt-editor" id="promptEditor" spellcheck="true" aria-label="Child prompt">${esc(item.prompt)}</textarea><div class="editor-foot"><span id="editorCount">${wordCount(item.prompt)} words · ${item.prompt.length} characters</span><span>Updated ${human(item.updated)}</span></div></section><aside class="side-stack"><div class="side-card"><h3>Relationship</h3><div style="color:var(--muted);font-size:10px;line-height:1.55">Inherits the intent and shared constraints of <b style="color:var(--ink)">${esc(p.title)}</b>.</div></div><div class="side-card"><h3>Variables in child</h3><div class="chip-list" id="variableList">${vars.length?vars.map(v=>`<span class="chip">{{${esc(v)}}}</span>`).join(''):'<span class="chip empty">Uses parent variables</span>'}</div></div></aside></div><div class="form-card" style="margin-top:16px"><div class="field"><label>CHILD NOTES</label><textarea id="itemNotes" style="min-height:80px">${esc(item.notes||'')}</textarea></div><div class="form-actions"><button class="danger-button" data-delete-item>Delete child prompt</button><span class="form-hint">Changes save automatically</span></div></div></div>`}
+    function collectionView(p,type){const items=itemsFor(p,type),copy={child:['Child prompts','Focused instruction layers that inherit the primary prompt.'],subject:['Test subjects','Models, people, or systems used to evaluate this prompt.'],result:['Test results','Observed outcomes linked directly to this prompt and its setup.'],environment:['Environments','Reusable conditions and configurations for testing this prompt.']}[type];return `<div class="surface-inner"><div class="page-head"><div><div class="eyebrow">Project directory</div><h1>${copy[0]}</h1><p class="page-subtitle">${copy[1]}</p></div><div class="head-actions"><button class="tool-button primary" data-add-item="${type}">+ Add ${singular(type)}</button></div></div>${items.length?`<div class="collection-grid">${items.map(x=>collectionCard(type,x,p)).join('')}</div>`:`<div class="form-card empty-state" style="min-height:340px"><div class="empty-box"><div class="empty-symbol">${type==='child'?'↳':type==='subject'?'◎':type==='result'?'✓':'□'}</div><h2>No ${copy[0].toLowerCase()} yet</h2><p>Add the first ${singular(type)} beneath this prompt.</p><button class="tool-button primary" data-add-item="${type}">Add ${singular(type)}</button></div></div>`}</div>`}
+    function collectionCard(type,x,p){const meta=type==='child'?x.prompt:type==='subject'?x.details:type==='environment'?x.config:x.outcome,resultExtra=type==='result'?`<span class="score-pill">${x.score||'—'} / 100</span>`:`<span>${human(x.updated)}</span>`,label=type==='child'?'Child prompt':type==='subject'?x.type:type==='environment'?x.type:'Test result';return `<article class="collection-card" data-open-item="${type}" data-id="${x.id}"><div class="collection-type">${esc(label||folderName(type))}</div><h3>${esc(x.title)}</h3><p>${esc(meta||'No details yet.')}</p><div class="card-foot"><span>${type==='result'?esc(p.subjects.find(s=>s.id===x.subjectId)?.title||'Unassigned'):'Open to edit'}</span>${resultExtra}</div></article>`}
+    function field(id,label,value,full=false,type='text'){return `<div class="field ${full?'full':''}"><label for="${id}">${label.toUpperCase()}</label><input id="${id}" type="${type}" value="${esc(value)}" ${type==='number'?'min="0" max="100"':''}></div>`}
+    function area(id,label,value,full=false){return `<div class="field ${full?'full':''}"><label for="${id}">${label.toUpperCase()}</label><textarea id="${id}">${esc(value||'')}</textarea></div>`}
+    function selectField(id,label,items,value){return `<div class="field"><label for="${id}">${label.toUpperCase()}</label><select id="${id}"><option value="">Unassigned</option>${items.map(x=>`<option value="${x.id}" ${x.id===value?'selected':''}>${esc(x.title)}</option>`).join('')}</select></div>`}
+    function recordEditor(type,item,p){const configs={subject:{eyebrow:'Test subject',subtitle:'Define the model, person, group, or system used to evaluate this prompt.'},environment:{eyebrow:'Work environment',subtitle:'Capture the repeatable conditions in which this prompt is tested.'},result:{eyebrow:'Test result',subtitle:'Record the observed outcome. Results belong directly to this prompt project.'}};let fields='';if(type==='subject')fields=`${field('itemTitle','Name',item.title)}${field('itemType','Type',item.type)}${field('itemVersion','Version or cohort',item.version)}${area('itemDetails','Details',item.details,true)}`;if(type==='environment')fields=`${field('itemTitle','Name',item.title)}${field('itemType','Type',item.type)}${area('itemConfig','Configuration',item.config,true)}${area('itemDetails','Notes',item.details,true)}`;if(type==='result')fields=`${field('itemTitle','Result title',item.title,true)}${selectField('itemSubject','Test subject',p.subjects,item.subjectId)}${selectField('itemEnvironment','Environment',p.environments,item.environmentId)}${field('itemScore','Score (0–100)',item.score,false,'number')}${area('itemOutcome','Observed outcome',item.outcome,true)}${area('itemNotes','Notes and next change',item.notes,true)}`;return `<div class="surface-inner"><div class="page-head"><div><div class="eyebrow">${configs[type].eyebrow}</div><h1>${esc(item.title)}</h1><p class="page-subtitle">${configs[type].subtitle}</p></div></div><section class="form-card"><div class="field-grid">${fields}</div><div class="form-actions"><button class="danger-button" data-delete-item>Delete ${type}</button><span class="form-hint">Changes save automatically · Updated ${human(item.updated)}</span></div></section></div>`}
+    function bindSurface(){$$('[data-new-project]').forEach(b=>b.onclick=openProjectDialog);$$('[data-folder]').forEach(b=>b.onclick=()=>{selection={type:'folder',id:b.dataset.folder};render()});$$('[data-add-item]').forEach(b=>b.onclick=()=>addItem(b.dataset.addItem));$$('[data-open-item]').forEach(b=>b.onclick=()=>{selection={type:b.dataset.openItem,id:b.dataset.id};render()});$('[data-delete-project]')?.addEventListener('click',deleteProject);$('[data-delete-item]')?.addEventListener('click',deleteItem);$('[data-copy-editor]')?.addEventListener('click',copyEditor);$('[data-insert-variable]')?.addEventListener('click',insertVariable);const p=project(),item=currentItem();bindInput('#projectTitle',v=>{p.title=v;p.updated=today()},()=>{renderProjects();renderTree();renderTopbar();const heading=$('.page-head h1');if(heading)heading.textContent=p.title});bindInput('#projectNotes',v=>{p.notes=v;p.updated=today()});bindInput('#itemTitle',v=>{item.title=v;item.updated=today()},()=>{renderProjects();renderTree();renderTopbar();const heading=$('.page-head h1');if(heading)heading.textContent=item.title});bindInput('#itemNotes',v=>{item.notes=v;item.updated=today()});const editor=$('#promptEditor');if(editor)editor.oninput=()=>{const target=selection.type==='prompt'?p:item;target.prompt=editor.value;target.updated=today();updateEditorMeta(editor.value);save()};const map={itemType:'type',itemVersion:'version',itemDetails:'details',itemConfig:'config',itemSubject:'subjectId',itemEnvironment:'environmentId',itemOutcome:'outcome',itemNotes:'notes'};Object.entries(map).forEach(([id,key])=>bindInput('#'+id,v=>{item[key]=v;item.updated=today()}));bindInput('#itemScore',v=>{item.score=Math.max(0,Math.min(100,Number(v)||0));item.updated=today()})}
+    function bindInput(selector,update,after){const el=$(selector);if(!el)return;el.oninput=()=>{update(el.value);save();after?.()}}
+    function updateEditorMeta(text){const count=$('#editorCount');if(count)count.textContent=`${wordCount(text)} words · ${text.length} characters`;const list=$('#variableList');if(list){const vars=variables(text);list.innerHTML=vars.length?vars.map(v=>`<span class="chip">{{${esc(v)}}}</span>`).join(''):'<span class="chip empty">No variables detected</span>'}}
+    function addItem(type){const p=project();if(!p)return;const date=today();let item;if(type==='child')item={id:uid('ch'),title:'Untitled child prompt',prompt:'Add the focused instructions that extend the primary prompt.',notes:'',updated:date};if(type==='subject')item={id:uid('su'),title:'Untitled test subject',type:'Language model',details:'',version:'',updated:date};if(type==='environment')item={id:uid('en'),title:'Untitled environment',type:'Work environment',config:'',details:'',updated:date};if(type==='result')item={id:uid('re'),title:'Untitled test result',subjectId:p.subjects[0]?.id||'',environmentId:p.environments[0]?.id||'',score:0,outcome:'',notes:'',updated:date};itemsFor(p,type).unshift(item);p.updated=date;selection={type,id:item.id};save(true);render();toast(`${singular(type)[0].toUpperCase()+singular(type).slice(1)} added`)}
+    function deleteItem(){const p=project(),item=currentItem();if(!p||!item)return;if(!confirm(`Delete “${item.title}”? This cannot be undone.`))return;p[collectionKey(selection.type)]=itemsFor(p,selection.type).filter(x=>x.id!==item.id);selection={type:'folder',id:selection.type};save(true);render();toast('Item deleted')}
+    function deleteProject(){const p=project();if(!p)return;if(!confirm(`Delete the entire “${p.title}” project and all of its child records? This cannot be undone.`))return;state.projects=state.projects.filter(x=>x.id!==p.id);projectId=state.projects[0]?.id||null;selection={type:'prompt',id:null};save(true);render();toast('Project deleted')}
+    function openProjectDialog(){$('#dialogKicker').textContent='One prompt, one project';$('#dialogTitle').textContent='Create a prompt project';$('#dialogForm').innerHTML=`<p class="dialog-copy">Start with the prompt. Add child prompts, subjects, environments, and results from its project tree when you need them.</p><div class="field-grid"><div class="field full"><label>PROJECT NAME</label><input name="title" required autofocus placeholder="e.g. Trustworthy support replies"></div><div class="field full"><label>PRIMARY PROMPT</label><textarea name="prompt" required style="min-height:180px" placeholder="Write or paste the prompt…"></textarea></div></div><div class="dialog-actions"><button type="button" class="tool-button" data-cancel>Cancel</button><button class="tool-button primary" type="submit">Create project</button></div>`;$('#dialogBackdrop').classList.add('open');$('[data-cancel]').onclick=closeDialog;$('#dialogForm').onsubmit=e=>{e.preventDefault();const d=Object.fromEntries(new FormData(e.target)),p={id:uid('pr'),title:d.title,prompt:d.prompt,notes:'',children:[],subjects:[],environments:[],results:[],updated:today()};state.projects.unshift(p);projectId=p.id;selection={type:'prompt',id:null};save(true);closeDialog();render();toast('Prompt project created')}}
+    function closeDialog(){$('#dialogBackdrop').classList.remove('open')}
+    function copyEditor(){const text=$('#promptEditor')?.value||project()?.prompt||'';copyText(text)}
+    function copyText(text){if(navigator.clipboard&&window.isSecureContext)navigator.clipboard.writeText(text).then(()=>toast('Prompt copied')).catch(()=>fallbackCopy(text));else fallbackCopy(text)}
+    function fallbackCopy(text){const area=document.createElement('textarea');area.value=text;document.body.appendChild(area);area.select();document.execCommand('copy');area.remove();toast('Prompt copied')}
+    function insertVariable(){const editor=$('#promptEditor');if(!editor)return;const name=prompt('Variable name (without braces):');if(!name?.trim())return;const token='{{'+name.trim()+'}}',start=editor.selectionStart,end=editor.selectionEnd;editor.setRangeText(token,start,end,'end');editor.dispatchEvent(new Event('input'));editor.focus()}
+    function clearAll(){if(!state.projects.length){toast('Workspace is already empty');return}if(!confirm(`Clear all ${state.projects.length} prompt projects and every child record? This cannot be undone.`))return;state={projects:[]};projectId=null;selection={type:'prompt',id:null};save(true);render();toast('Everything cleared')}
+    $('#newProject').onclick=openProjectDialog;$('#dialogClose').onclick=closeDialog;$('#dialogBackdrop').onclick=e=>{if(e.target===e.currentTarget)closeDialog()};$('#clearAll').onclick=clearAll;$('#railCollapse').onclick=toggleRail;$('#mobileMenu').onclick=()=>$('#projectRail').classList.toggle('open');$('#projectSearch').oninput=e=>{search=e.target.value.trim().toLowerCase();renderProjects()};$('#quickAdd').onclick=()=>addItem(selection.type==='folder'?selection.id:'child');$('#copyPrompt').onclick=()=>{const p=project(),item=currentItem();if(!p)return;copyText(selection.type==='child'?item.prompt:p.prompt)};document.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='k'){e.preventDefault();$('#projectSearch').focus()}if(e.key==='Escape'){closeDialog();$('#projectRail').classList.remove('open')}});applyRailState();render();
   </script>
 </body>
 </html>
