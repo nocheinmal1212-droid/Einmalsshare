@@ -8,7 +8,7 @@
    * It intentionally uses only browser APIs and stores no Bearer-token value.
    */
 
-  const VERSION = "1.0.0";
+  const VERSION = "1.0.1";
 
   // ---------------------------------------------------------------------------
   // OPERATOR EDIT AREA
@@ -593,6 +593,50 @@ They are distinct files, despite the former being the latter's parent.
     return id;
   }
 
+  function safeDiagnosticText(value) {
+    if (typeof value !== "string") return value ?? null;
+    return value
+      .replace(/Bearer\s+eyJ[A-Za-z0-9._-]+/gi, "Bearer [REDACTED]")
+      .replace(/eyJ[A-Za-z0-9._-]{20,}/g, "[JWT REDACTED]")
+      .slice(0, 500);
+  }
+
+  function valueType(value) {
+    if (value === null) return "null";
+    if (Array.isArray(value)) return "array";
+    return typeof value;
+  }
+
+  function objectKeys(value) {
+    return value && typeof value === "object" && !Array.isArray(value) ? Object.keys(value).sort() : [];
+  }
+
+  function summarizePromptEnvelope(payload) {
+    const data = payload && typeof payload === "object" ? payload.data : undefined;
+    let parsedDataString = null;
+    if (typeof data === "string") {
+      try {
+        parsedDataString = JSON.parse(data);
+      } catch (_) {
+        // The string may be ordinary assistant text. Its contents are not logged.
+      }
+    }
+    return {
+      topLevelType: valueType(payload),
+      topLevelKeys: objectKeys(payload),
+      success: payload && typeof payload === "object" ? payload.success ?? null : null,
+      ret_msg: safeDiagnosticText(payload && typeof payload === "object" ? payload.ret_msg : null),
+      message: safeDiagnosticText(payload && typeof payload === "object" ? payload.message : null),
+      error: safeDiagnosticText(payload && typeof payload === "object" ? payload.error : null),
+      dataType: valueType(data),
+      dataKeys: objectKeys(data),
+      dataStringLength: typeof data === "string" ? data.length : null,
+      dataStringParsesAsJson: parsedDataString !== null,
+      parsedDataType: valueType(parsedDataString),
+      parsedDataKeys: objectKeys(parsedDataString),
+    };
+  }
+
   async function createSession() {
     const response = await fetchBearerWithPolicy(
       requestTemplate.sessionUrl,
@@ -610,7 +654,16 @@ They are distinct files, despite the former being the latter's parent.
 
   function parsePromptResponse(payload) {
     if (!payload || typeof payload !== "object" || !payload.data || !Array.isArray(payload.data.list_page_info)) {
-      throw new SchemaError("Prompt response lacks data.list_page_info[].", "PROMPT_SCHEMA_DRIFT");
+      const diagnostic = summarizePromptEnvelope(payload);
+      console.error("[kb] Sanitized Prompt-envelope diagnostic:", diagnostic);
+      const reportedFailure = payload && typeof payload === "object" && payload.success === false;
+      throw new SchemaError(
+        reportedFailure
+          ? `Prompt reported application failure: ${safeDiagnosticText(payload.ret_msg || payload.message || payload.error || "no error message")}`
+          : "Prompt response lacks data.list_page_info[]. See the sanitized envelope diagnostic above.",
+        reportedFailure ? "PROMPT_REPORTED_FAILURE" : "PROMPT_SCHEMA_DRIFT",
+        diagnostic,
+      );
     }
     return payload.data.list_page_info.map((item, itemIndex) => {
       if (!item || typeof item !== "object") {
@@ -1061,7 +1114,12 @@ They are distinct files, despite the former being the latter's parent.
         console.table(report(false));
       }
     } catch (error) {
-      state.stopReason = { at: now(), code: error.code || error.name, message: error.message };
+      state.stopReason = {
+        at: now(),
+        code: error.code || error.name,
+        message: error.message,
+        details: error.details || null,
+      };
       persistState();
       console.error("[kb] Run halted cleanly; progress is saved.", error);
       throw error;
@@ -1232,6 +1290,7 @@ They are distinct files, despite the former being the latter's parent.
       buildPrompt,
       parseSessionId,
       parsePromptResponse,
+      summarizePromptEnvelope,
       extractDocumentHash,
       sanitizeCapturedRequest,
       fnv1a,
