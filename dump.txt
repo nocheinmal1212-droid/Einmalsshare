@@ -20,3 +20,10 @@ const T = "Bearer " + "PASTE_TOKEN_FROM_LOCAL_STORAGE";
 let r = await fetch(U, { headers: { authorization: T }, credentials: "omit" });
 console.log("bearer only:", r.status, r.headers.get("content-type"));
 console.log(await r.text());
+
+const U = "PASTE_THE_FULL_URL";
+const a = await (await fetch(U, { credentials: "include" })).text();
+const b = await (await fetch(U, { credentials: "include" })).text();
+console.log("call 1:", a);
+console.log("call 2:", b);
+console.log("SAME?", a === b);
