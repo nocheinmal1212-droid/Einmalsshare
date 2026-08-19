@@ -1,52 +1,234 @@
-Retrieve each file listed below by its exact filename and cite it.
+# Deterministic Knowledge-Base Manifest Retrieval
 
-<files>
-[PLACEHOLDER: 8–10 exact filenames, one per line]
-</files>
+<role>
 
-Output exactly one line per file in <files>, in the same order, in this format:
+You are executing a manifest-reconciliation task against an existing knowledge base.
 
-<filename> | FOUND | [n]
-<filename> | NOT_FOUND | -
+This is NOT an open-ended research task.
 
-Rules:
-- Match filenames exactly. If no exact match exists, output NOT_FOUND. Never
-  substitute a similarly named file and never infer which file was meant.
-- An attachment is an independent file from its parent. Cite each separately;
-  that is not duplication.
-- If a file cannot be retrieved, output NOT_FOUND and continue to the next.
-  Do not stop the run.
-- No summaries, no commentary, no grouping. The number of output lines must
-  equal the number of lines in <files>.
+Every filename in `<target_files>` is an independent retrieval target that must be processed individually.
 
-End with the citation list, one entry per FOUND file.
+</role>
 
-v2
+<objective>
 
-Fill in a value for every numbered line below. The list is fixed: return all
-[N] lines, in order, with the numbering intact.
+For every file listed in `<target_files>`:
 
-Before writing each line's value:
-- Search for that one filename. One search per line. Do not run a single
-  combined search covering several lines.
-- If nothing matches, search again on the ID fragment alone (e.g. 2025_31),
-  then write the value.
+1. Locate and inspect the EXACT target file.
+2. Determine that file's release, issue, or publication date from the available evidence.
+3. Cite that exact file once in the final report.
+4. Continue processing all remaining targets even if one target cannot be resolved.
 
-Value formats:
-  <resolved filename> | [n]      found — cite it
-  CANDIDATES: <filenames seen>   searches returned documents, none matched
-  ZERO                           both searches returned no documents at all
+Completeness is more important than brevity.
 
-1. UN_GAAM_ALERT_2025_31.pdf ->
-2. UN_GAAM_ALERT_2025_32.pdf ->
-3. [PLACEHOLDER: one pre-numbered, pre-named line per file]
+</objective>
 
-Rules:
-- Every numbered line gets a value. If you are about to skip a line, write
-  ZERO and continue.
-- Do not merge, group, reorder, or summarize lines. Do not add lines.
-- Files differing only by an _Attachment_N suffix are separate documents.
-  Resolving one does not resolve the other; a citation for one is not a
-  citation for the other.
+<identity_rules>
 
-Citations follow the completed list.
+A file is identified by its canonical filename.
+
+Each filename in `<target_files>` represents a distinct required target.
+
+Parent documents and their attachments are ALWAYS independent targets.
+
+For example:
+
+* `UN_GAAM_ALERT_2025_31.pdf`
+* `GAAM_Alert_2025_31_Attachment_1.pdf`
+
+are two separate files.
+
+Retrieving or citing the parent DOES NOT satisfy the attachment target.
+
+Retrieving or citing an attachment DOES NOT satisfy the parent target.
+
+An attachment linked from, embedded in, referenced by, or associated with a parent document MUST still be independently retrieved and independently cited.
+
+Never silently merge, collapse, deduplicate, or omit attachment targets because of their relationship to another file.
+
+</identity_rules>
+
+<resolution_rules>
+
+Process every target filename independently.
+
+A target counts as RESOLVED only when the retrieved/cited resource corresponds to that target file itself.
+
+Do not treat a related document, parent document, attachment, similarly named document, or document mentioning the filename as successful resolution of the target.
+
+Do not declare a target unreachable after a single unsuccessful lookup.
+
+If an initial lookup fails, retry the target independently before marking it unresolved.
+
+Use the most filename-specific retrieval method available.
+
+Preferred resolution order:
+
+1. Exact full filename.
+2. Exact filename stem without the extension, if necessary.
+3. A minimally normalized filename query if required by the retrieval system, while still requiring the returned resource to correspond to the original target.
+
+Normalization may be used only to FIND the target. It must never change the identity of the target.
+
+If a candidate is retrieved whose filename does not correspond to the requested target, reject that candidate and continue searching.
+
+A failed search attempt is NOT evidence that the file does not exist.
+
+</resolution_rules>
+
+<unreachable_rule>
+
+`UNREACHABLE` is an escape hatch of last resort, not a normal retrieval result.
+
+Mark a target `UNREACHABLE` only after the available filename-based retrieval methods have been attempted and no matching resource can be resolved.
+
+When a target is marked `UNREACHABLE`, record it in the unresolved-files section and continue with the next target.
+
+Never terminate the full task because one target is unresolved.
+
+Never fabricate a citation for an unresolved target.
+
+</unreachable_rule>
+
+<date_rules>
+
+For each successfully resolved target, inspect THAT FILE'S evidence and determine its release, issue, or publication date.
+
+Prefer an explicitly stated release, issue, publication, promulgation, or equivalent document date.
+
+Output the most precise supported date.
+
+If day, month, and year are supported:
+
+`YYYY-MM-DD`
+
+If only month and year are supported:
+
+`YYYY-MM`
+
+Do not invent a day.
+
+Do not infer a date merely from:
+
+* the filename,
+* the year contained in a filename,
+* retrieval order,
+* another document's date,
+* or general knowledge.
+
+If even month and year cannot be established from the permitted evidence, report `DATE_NOT_FOUND` rather than guessing.
+
+</date_rules>
+
+<citation_rules>
+
+Every successfully resolved target file MUST be cited.
+
+Each target file MUST appear exactly once in the final citation report.
+
+The citation must correspond to the target file itself.
+
+A citation to a parent cannot substitute for a citation to an attachment.
+
+A citation to an attachment cannot substitute for a citation to its parent.
+
+Do not omit attachment citations even when the attachment is referenced or linked inside its parent document.
+
+Do not cite the same target file multiple times merely because multiple relevant pages or date references were found.
+
+Select the strongest supporting page/evidence and use one final citation for that target.
+
+</citation_rules>
+
+<processing_discipline>
+
+Maintain an internal ledger containing one entry for every filename in `<target_files>`.
+
+Each target must end in exactly one terminal state:
+
+* RESOLVED_WITH_DATE
+* RESOLVED_DATE_NOT_FOUND
+* UNREACHABLE
+
+Before producing the final answer, reconcile the ledger against `<target_files>`.
+
+The number of terminal-state records MUST equal the number of distinct target filenames supplied.
+
+No target may disappear from the report.
+
+Pay particular attention to filenames containing terms such as:
+
+`Attachment`
+`Annex`
+`Appendix`
+`Enclosure`
+`Supplement`
+
+These remain independent files whenever they appear independently in `<target_files>`.
+
+Do not treat those words as permission to collapse the target into a parent document.
+
+</processing_discipline>
+
+<final_validation>
+
+Before responding, verify all of the following:
+
+1. Every input filename has exactly one result record.
+2. No input filename has been silently omitted.
+3. Every attachment/subfile in the input has its own result record.
+4. Every successfully resolved target has exactly one citation.
+5. No unresolved target has a fabricated citation.
+6. Every citation refers to the same file named in its result record.
+7. Parent files and attachments have not been merged.
+8. Every reported date is supported by permitted evidence.
+9. The count of resolved targets plus unresolved targets equals the number of distinct input filenames.
+
+If validation fails, correct the report before returning it.
+
+</final_validation>
+
+<output_format>
+
+Return results in the exact order supplied in `<target_files>`.
+
+Successful example:
+
+1. `UN_GAAM_ALERT_2025_31.pdf` -> `2025-09-15` [1]
+2. `GAAM_Alert_2025_31_Attachment_1.pdf` -> `2025-09-15` [2]
+
+Date unavailable example:
+
+3. `Example_File.pdf` -> `DATE_NOT_FOUND` [3]
+
+Unreachable example:
+
+4. `Missing_File.pdf` -> `UNREACHABLE`
+
+Citations:
+
+[1] Assurance Knowledge Agent/UN_GAAM_ALERT_2025_31.pdf page: [1]
+
+[2] Assurance Knowledge Agent/GAAM_Alert_2025_31_Attachment_1.pdf page: [1]
+
+[3] Assurance Knowledge Agent/Example_File.pdf page: [1]
+
+Unresolved files:
+
+* `Missing_File.pdf`
+
+Summary:
+
+Expected targets: <N>
+Resolved with date: <N>
+Resolved without date: <N>
+Unreachable: <N>
+Total accounted for: <N>
+
+</output_format>
+
+<target_files>
+
+{{TARGET_FILES}}
+
+</target_files>
