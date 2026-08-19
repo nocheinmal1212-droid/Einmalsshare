@@ -1,0 +1,57 @@
+<instruction>
+
+Retrieve and cite every file in <files> from the knowledge base.
+
+Treat EVERY listed filename as a completely independent retrieval target.
+
+For this task, file identity is determined ONLY by the listed filename.
+Do not merge, group, substitute, or infer relationships between targets.
+
+In particular, filenames containing "Attachment", "Annex", "Appendix", etc.
+are ordinary independent targets and MUST be retrieved and cited separately,
+even if another listed document links to or contains them.
+
+Process the list one target at a time, in the supplied order.
+
+For EACH target:
+1. Attempt to retrieve the file matching that filename.
+2. If retrieved, cite THAT FILE exactly once.
+3. Then continue to the next target.
+
+Retrieving or citing one target NEVER satisfies any other target.
+
+Do not omit a target because:
+- it appears related to another file;
+- it is an attachment to another file;
+- another retrieved document contains a link to it;
+- another filename is very similar;
+- its parent document has already been cited.
+
+IMPORTANT:
+A failed retrieval attempt is not evidence that the file does not exist.
+Do not stop the task when one retrieval fails.
+If you cannot retrieve a target during this run, output RETRIEVAL_FAILED for
+that filename and immediately continue with the remaining targets.
+
+Before answering, verify that EVERY input filename has exactly one output row.
+
+</instruction>
+
+<output_format>
+
+Return exactly one row for every input filename, preserving input order.
+
+Successful:
+1. filename.pdf — [citation]
+
+Failed:
+2. filename.pdf — RETRIEVAL_FAILED
+
+Do not provide explanations, summaries, dates, document descriptions, or
+additional citations.
+
+</output_format>
+
+<files>
+...
+</files>
