@@ -8,7 +8,7 @@
    * It intentionally uses only browser APIs and stores no Bearer-token value.
    */
 
-  const VERSION = "1.2.0";
+  const VERSION = "1.2.1";
 
   // ---------------------------------------------------------------------------
   // OPERATOR EDIT AREA
@@ -34,6 +34,19 @@ PASTE_ONE_EXACT_FILENAME_PER_LINE_HERE.pdf
     requestTemplateKey: "kb_retrieval_request_template_v3",
     currentStatePointerKey: "kb_retrieval_current_state_v3",
   });
+
+  const DETAIL_COLUMNS = Object.freeze([
+    "index",
+    "fileName",
+    "status",
+    "synthetic",
+    "promptRespId",
+    "queryAttempts",
+    "citationCount",
+    "documentCount",
+    "savedNames",
+    "lastError",
+  ]);
 
   const PROMPT_PREFIX = `<instruction>
 Retrieve the release / issue date of each of those files listed below, backing off precision-wise to month and year if such information was not available. Strictly adhering to those rules:
@@ -456,6 +469,7 @@ NOT FOUND: {{FILE_NAME}}   — with no citation.
           resultGetCount: 0,
           downloadCount: 0,
           hashCollisions: [],
+          runLogs: [],
         },
         batches: [],
         pendingResults: [],
@@ -503,6 +517,10 @@ NOT FOUND: {{FILE_NAME}}   — with no citation.
     }
     if (!Array.isArray(state.meta.hashCollisions)) {
       state.meta.hashCollisions = [];
+      changed = true;
+    }
+    if (!Array.isArray(state.meta.runLogs)) {
+      state.meta.runLogs = [];
       changed = true;
     }
     for (const row of state.rows || []) {
@@ -1717,7 +1735,7 @@ NOT FOUND: {{FILE_NAME}}   — with no citation.
     await sleep(waitMs);
   }
 
-  async function runInternal(scopeRowCount = Infinity) {
+  async function runInternal(scopeRowCount = Infinity, runKind = "full") {
     if (running) throw new FatalError("A KB run is already active.", "RUN_ALREADY_ACTIVE");
     if (!nativeFetch) throw new FatalError("window.fetch is unavailable.", "FETCH_UNAVAILABLE");
     if (!requestTemplate) throw new FatalError("Capture a Prompt request first.", "REQUEST_NOT_CONFIGURED");
@@ -1733,6 +1751,8 @@ NOT FOUND: {{FILE_NAME}}   — with no citation.
     persistState();
     const rowIsInScope = (row) => row.synthetic || row.index < scopeRowCount;
 
+    let runError = null;
+    let logError = null;
     try {
       // An acknowledged prompt is resumed by reissuing only its idempotent,
       // long-held result GET. Never create a new session or resubmit its POST.
@@ -1779,14 +1799,37 @@ NOT FOUND: {{FILE_NAME}}   — with no citation.
       };
       persistState();
       console.error("[kb] Run halted cleanly; progress is saved.", error);
-      throw error;
+      runError = error;
     } finally {
-      running = false;
       if (stopRequested) {
         state.stopReason = { at: now(), code: "OPERATOR_STOP", message: "Stopped by operator." };
         persistState();
       }
+      try {
+        await saveRunDetailsLog(runKind);
+      } catch (error) {
+        logError = error instanceof KbError
+          ? error
+          : new FatalError(
+              `Could not write the end-of-run details log: ${error?.message || String(error)}`,
+              "RUN_LOG_WRITE_FAILED",
+            );
+        console.error("[kb] Could not write the end-of-run details log.", logError);
+        if (!runError) {
+          state.stopReason = {
+            at: now(),
+            code: logError.code || "RUN_LOG_WRITE_FAILED",
+            message: logError.message,
+            details: logError.details || null,
+          };
+          persistState();
+        }
+      }
+      running = false;
     }
+
+    if (runError) throw runError;
+    if (logError) throw logError;
 
     console.info("[kb] Run pass complete. Progress is saved.");
     return report();
@@ -1926,8 +1969,8 @@ NOT FOUND: {{FILE_NAME}}   — with no citation.
     return result;
   }
 
-  function details(status = null) {
-    const rows = getState().rows
+  function detailRows(status = null) {
+    return getState().rows
       .filter((row) => !status || row.status === status)
       .map((row) => ({
         index: row.index,
@@ -1941,8 +1984,46 @@ NOT FOUND: {{FILE_NAME}}   — with no citation.
         savedNames: row.documents.map((document) => document.savedName).filter(Boolean).join(" | "),
         lastError: row.errors.at(-1)?.message || "",
       }));
+  }
+
+  function details(status = null) {
+    const rows = detailRows(status);
     console.table(rows);
     return rows;
+  }
+
+  function csvCell(value) {
+    const text = value === null || value === undefined ? "" : String(value);
+    return `"${text.replace(/"/g, '""')}"`;
+  }
+
+  function detailsCsv(rows) {
+    return [
+      DETAIL_COLUMNS.map(csvCell).join(","),
+      ...rows.map((row) => DETAIL_COLUMNS.map((column) => csvCell(row[column])).join(",")),
+    ].join("\r\n") + "\r\n";
+  }
+
+  async function saveRunDetailsLog(runKind) {
+    const generatedAt = now();
+    const rows = detailRows();
+    const blob = new Blob(["\uFEFF", detailsCsv(rows)], { type: "text/csv;charset=utf-8" });
+    const stamp = generatedAt.replace(/[:.]/g, "-");
+    const sequence = String(state.meta.runLogs.length + 1).padStart(4, "0");
+    const fileName = `kb-details-${runKind}-${sequence}-${stamp}.csv`;
+    const saved = outputMode === "directory"
+      ? await saveToDirectory(fileName, blob, await sha256Blob(blob))
+      : saveViaBrowser(fileName, blob);
+    state.meta.runLogs.push({
+      generatedAt,
+      runKind,
+      rowCount: rows.length,
+      savedName: saved.savedName,
+      saveMode: saved.saveMode,
+    });
+    persistState();
+    console.info(`[kb] Details log saved: ${saved.savedName}`);
+    return saved.savedName;
   }
 
   function exportState() {
@@ -1998,9 +2079,9 @@ NOT FOUND: {{FILE_NAME}}   — with no citation.
     setTokenKey,
     pickFolder,
     useBrowserDownloads,
-    pilot: (count = 20) => runInternal(count),
-    run: () => runInternal(Infinity),
-    resume: () => runInternal(Infinity),
+    pilot: (count = 20) => runInternal(count, "pilot"),
+    run: () => runInternal(Infinity, "full"),
+    resume: () => runInternal(Infinity, "resume"),
     stop,
     requeueDownloadFailures,
     backfillUnmatchedCitations,
