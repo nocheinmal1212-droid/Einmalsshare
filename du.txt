@@ -1,0 +1,16 @@
+<instruction>
+Retrieve the file by it's EXACT filename:
+<file_name>
+GSC_INTL_ASSSERVCS_12_5930
+</file_name>
+Retrieve recursively if nothing hits on first match. 
+Return the name of the first paragraph of that file.
+Check NOTHING beyond that.
+Cite this file and this file only, with EXACTLY one citation in your final output.
+</instruction>
+
+<meta>
+maxQueryAttemps = 3;
+maxSearchDepth = 4;
+A file is defined exclusively by name, the attachment to a file should be treated as an independent file and cited independently. e.g. GAAM_Alert_2025_31_Attachment_1 and GAAM_Alert_2025_31 are distinct files.
+</meta>
