@@ -1,0 +1,1953 @@
+{
+ "log": {
+  "version": "1.2",
+  "creator": {
+   "name": "WebInspector",
+   "version": "537.36"
+  },
+  "pages": [],
+  "entries": [
+   {
+    "_initiator": {
+     "type": "script"
+    },
+    "_priority": "High",
+    "_resourceType": "xhr",
+    "cache": {},
+    "request": {
+     "method": "GET",
+     "url": "https://<<HOST_1>>/api/Tools/GetSessionId",
+     "httpVersion": "HTTP/1.1",
+     "headers": [
+      {
+       "name": "Accept",
+       "value": "application/json, text/plain, */*"
+      },
+      {
+       "name": "Accept-Encoding",
+       "value": "gzip, deflate, br, zstd"
+      },
+      {
+       "name": "Accept-Language",
+       "value": "en-US,en;q=0.9"
+      },
+      {
+       "name": "Connection",
+       "value": "keep-alive"
+      },
+      {
+       "name": "DNT",
+       "value": "1"
+      },
+      {
+       "name": "Host",
+       "value": "auditchat-api.cn.kworld.kpmg.com"
+      },
+      {
+       "name": "Origin",
+       "value": "https://auditchat.cn.kworld.kpmg.com"
+      },
+      {
+       "name": "Referer",
+       "value": "https://auditchat.cn.kworld.kpmg.com/"
+      },
+      {
+       "name": "Sec-Fetch-Dest",
+       "value": "empty"
+      },
+      {
+       "name": "Sec-Fetch-Mode",
+       "value": "cors"
+      },
+      {
+       "name": "Sec-Fetch-Site",
+       "value": "same-site"
+      },
+      {
+       "name": "User-Agent",
+       "value": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/<<IP_1>> Safari/537.36 Edg/<<IP_1>>"
+      },
+      {
+       "name": "sec-ch-ua",
+       "value": "\"Not=A?Brand\";v=\"99\", \"Microsoft Edge\";v=\"151\", \"Chromium\";v=\"151\""
+      },
+      {
+       "name": "sec-ch-ua-mobile",
+       "value": "?0"
+      },
+      {
+       "name": "sec-ch-ua-platform",
+       "value": "\"Windows\""
+      }
+     ],
+     "queryString": [],
+     "cookies": [],
+     "headersSize": 2566,
+     "bodySize": 0
+    },
+    "response": {
+     "status": 200,
+     "statusText": "OK",
+     "httpVersion": "HTTP/1.1",
+     "headers": [
+      {
+       "name": "access-control-allow-credentials",
+       "value": "true"
+      },
+      {
+       "name": "access-control-allow-methods",
+       "value": "*"
+      },
+      {
+       "name": "access-control-allow-origin",
+       "value": "https://auditchat.cn.kworld.kpmg.com"
+      },
+      {
+       "name": "connection",
+       "value": "close"
+      },
+      {
+       "name": "content-length",
+       "value": "76"
+      },
+      {
+       "name": "content-type",
+       "value": "application/json"
+      },
+      {
+       "name": "date",
+       "value": "Thu, 20 Aug 2026 02:49:36 GMT"
+      },
+      {
+       "name": "server",
+       "value": "waitress"
+      },
+      {
+       "name": "strict-transport-security",
+       "value": "max-age=31536000;includeSubDomains;preload"
+      },
+      {
+       "name": "vary",
+       "value": "Origin, Cookie"
+      },
+      {
+       "name": "x-content-type-options",
+       "value": "nosniff"
+      }
+     ],
+     "cookies": [],
+     "content": {
+      "size": 76,
+      "mimeType": "application/json",
+      "compression": 0,
+      "text": "{\n \"data\": \"<<UUID_1>>\",\n \"ret_msg\": \"\",\n \"success\": true\n}"
+     },
+     "redirectURL": "",
+     "headersSize": 545,
+     "bodySize": 76,
+     "_transferSize": 621,
+     "_error": null,
+     "_fetchedViaServiceWorker": false
+    },
+    "startedDateTime": "2026-08-20T02:49:35.988Z",
+    "time": 17.99999998183921,
+    "timings": {
+     "blocked": 9.950999983046204,
+     "dns": -1,
+     "ssl": -1,
+     "connect": -1,
+     "send": 0.4039999999999999,
+     "wait": 6.58799998293072,
+     "receive": 1.057000015862286,
+     "_blocked_queueing": 8.245999983046204,
+     "_blocked_proxy": 0.30000000000000004,
+     "_workerStart": -1,
+     "_workerReady": -1,
+     "_workerFetchStart": -1,
+     "_workerRespondWithSettled": -1
+    },
+    "_connectionId": "22145"
+   },
+   {
+    "_initiator": {
+     "type": "preflight"
+    },
+    "_priority": "High",
+    "_resourceType": "preflight",
+    "cache": {},
+    "request": {
+     "method": "OPTIONS",
+     "url": "https://<<HOST_1>>/api/Tools/GetSessionId",
+     "httpVersion": "HTTP/1.1",
+     "headers": [
+      {
+       "name": "Accept",
+       "value": "*/*"
+      },
+      {
+       "name": "Accept-Encoding",
+       "value": "gzip, deflate, br, zstd"
+      },
+      {
+       "name": "Accept-Language",
+       "value": "en-US,en;q=0.9"
+      },
+      {
+       "name": "Access-Control-Request-Headers",
+       "value": "authorization"
+      },
+      {
+       "name": "Access-Control-Request-Method",
+       "value": "GET"
+      },
+      {
+       "name": "Connection",
+       "value": "keep-alive"
+      },
+      {
+       "name": "Host",
+       "value": "auditchat-api.cn.kworld.kpmg.com"
+      },
+      {
+       "name": "Origin",
+       "value": "https://auditchat.cn.kworld.kpmg.com"
+      },
+      {
+       "name": "Referer",
+       "value": "https://auditchat.cn.kworld.kpmg.com/"
+      },
+      {
+       "name": "Sec-Fetch-Dest",
+       "value": "empty"
+      },
+      {
+       "name": "Sec-Fetch-Mode",
+       "value": "cors"
+      },
+      {
+       "name": "Sec-Fetch-Site",
+       "value": "same-site"
+      },
+      {
+       "name": "User-Agent",
+       "value": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/<<IP_1>> Safari/537.36 Edg/<<IP_1>>"
+      }
+     ],
+     "queryString": [],
+     "cookies": [],
+     "headersSize": 582,
+     "bodySize": 0
+    },
+    "response": {
+     "status": 204,
+     "statusText": "No Content",
+     "httpVersion": "HTTP/1.1",
+     "headers": [
+      {
+       "name": "access-control-allow-credentials",
+       "value": "true"
+      },
+      {
+       "name": "access-control-allow-headers",
+       "value": "authorization"
+      },
+      {
+       "name": "access-control-allow-methods",
+       "value": "*"
+      },
+      {
+       "name": "access-control-allow-methods",
+       "value": "DELETE, GET, HEAD, OPTIONS, PATCH, POST, PUT"
+      },
+      {
+       "name": "access-control-allow-origin",
+       "value": "https://auditchat.cn.kworld.kpmg.com"
+      },
+      {
+       "name": "connection",
+       "value": "close"
+      },
+      {
+       "name": "content-type",
+       "value": "application/json"
+      },
+      {
+       "name": "date",
+       "value": "Thu, 20 Aug 2026 02:49:35 GMT"
+      },
+      {
+       "name": "server",
+       "value": "waitress"
+      },
+      {
+       "name": "strict-transport-security",
+       "value": "max-age=31536000;includeSubDomains;preload"
+      },
+      {
+       "name": "vary",
+       "value": "Origin"
+      },
+      {
+       "name": "x-content-type-options",
+       "value": "nosniff"
+      }
+     ],
+     "cookies": [],
+     "content": {
+      "size": 0,
+      "mimeType": "application/json",
+      "compression": 632
+     },
+     "redirectURL": "",
+     "headersSize": 632,
+     "bodySize": -632,
+     "_transferSize": 0,
+     "_error": null,
+     "_fetchedViaServiceWorker": false
+    },
+    "startedDateTime": "2026-08-20T02:49:35.990Z",
+    "time": 6.876000013068318,
+    "timings": {
+     "blocked": 0.341,
+     "dns": -1,
+     "ssl": -1,
+     "connect": -1,
+     "send": 0.2889999999999999,
+     "wait": 5.440999995205551,
+     "receive": 0.805000017862767,
+     "_blocked_queueing": -1,
+     "_blocked_proxy": 0.341,
+     "_workerStart": -1,
+     "_workerReady": -1,
+     "_workerFetchStart": -1,
+     "_workerRespondWithSettled": -1
+    },
+    "_connectionId": "22084"
+   },
+   {
+    "_initiator": {
+     "type": "script"
+    },
+    "_priority": "High",
+    "_resourceType": "xhr",
+    "cache": {},
+    "request": {
+     "method": "POST",
+     "url": "https://<<HOST_1>>/api/Prompt/CheckDuplicate",
+     "httpVersion": "HTTP/1.1",
+     "headers": [
+      {
+       "name": "Accept",
+       "value": "application/json, text/plain, */*"
+      },
+      {
+       "name": "Accept-Encoding",
+       "value": "gzip, deflate, br, zstd"
+      },
+      {
+       "name": "Accept-Language",
+       "value": "en-US,en;q=0.9"
+      },
+      {
+       "name": "Connection",
+       "value": "keep-alive"
+      },
+      {
+       "name": "Content-Length",
+       "value": "1401"
+      },
+      {
+       "name": "Content-Type",
+       "value": "application/json;charset=UTF-8"
+      },
+      {
+       "name": "DNT",
+       "value": "1"
+      },
+      {
+       "name": "Host",
+       "value": "auditchat-api.cn.kworld.kpmg.com"
+      },
+      {
+       "name": "Origin",
+       "value": "https://auditchat.cn.kworld.kpmg.com"
+      },
+      {
+       "name": "Referer",
+       "value": "https://auditchat.cn.kworld.kpmg.com/"
+      },
+      {
+       "name": "Sec-Fetch-Dest",
+       "value": "empty"
+      },
+      {
+       "name": "Sec-Fetch-Mode",
+       "value": "cors"
+      },
+      {
+       "name": "Sec-Fetch-Site",
+       "value": "same-site"
+      },
+      {
+       "name": "User-Agent",
+       "value": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/<<IP_1>> Safari/537.36 Edg/<<IP_1>>"
+      },
+      {
+       "name": "sec-ch-ua",
+       "value": "\"Not=A?Brand\";v=\"99\", \"Microsoft Edge\";v=\"151\", \"Chromium\";v=\"151\""
+      },
+      {
+       "name": "sec-ch-ua-mobile",
+       "value": "?0"
+      },
+      {
+       "name": "sec-ch-ua-platform",
+       "value": "\"Windows\""
+      }
+     ],
+     "queryString": [],
+     "cookies": [],
+     "headersSize": 2638,
+     "bodySize": 1401,
+     "postData": {
+      "mimeType": "application/json;charset=UTF-8",
+      "text": "{\n \"list_provider_id\": [\n  \"clara\"\n ],\n \"content\": \"<instruction>\\nRetrieve the specific release / issue date of each of those files listed below, backing off precision-wise to month and year if such information was not available. Strictly adhere to those rules:\\n<rules>\\n1. Cite each file EXACTLY ONCE.\\n2. Clarification to rule 1: A file is defined excl…<<TRUNCATED len=1332>>\"\n}"
+     }
+    },
+    "response": {
+     "status": 200,
+     "statusText": "OK",
+     "httpVersion": "HTTP/1.1",
+     "headers": [
+      {
+       "name": "access-control-allow-credentials",
+       "value": "true"
+      },
+      {
+       "name": "access-control-allow-methods",
+       "value": "*"
+      },
+      {
+       "name": "access-control-allow-origin",
+       "value": "https://auditchat.cn.kworld.kpmg.com"
+      },
+      {
+       "name": "content-length",
+       "value": "1516"
+      },
+      {
+       "name": "content-type",
+       "value": "application/json"
+      },
+      {
+       "name": "date",
+       "value": "Thu, 20 Aug 2026 02:50:26 GMT"
+      },
+      {
+       "name": "server",
+       "value": "waitress"
+      },
+      {
+       "name": "strict-transport-security",
+       "value": "max-age=31536000;includeSubDomains;preload"
+      },
+      {
+       "name": "vary",
+       "value": "Origin, Cookie"
+      },
+      {
+       "name": "x-content-type-options",
+       "value": "nosniff"
+      }
+     ],
+     "cookies": [],
+     "content": {
+      "size": 1516,
+      "mimeType": "application/json",
+      "compression": 0,
+      "text": "{\n \"data\": [\n  {\n   \"content\": \"<instruction>\\nRetrieve the specific release / issue date of each of those files listed below, backing off precision-wise to month and year if such information was not available. Strictly adhere to those rules:\\n<rules>\\n1. Cite each file EXACTLY ONCE.\\n2. Clarification to rule 1: A file is defined excl…<<TRUNCATED len=1332>>\",\n   \"created_time\": \"2026-08-20 09:13:06\",\n   \"prompt_id\": \"P00116884\",\n   \"staff_no\": \"86683421\",\n   \"status\": \"Completed\"\n  }\n ],\n \"ret_msg\": \"\",\n \"success\": true\n}"
+     },
+     "redirectURL": "",
+     "headersSize": 528,
+     "bodySize": 1516,
+     "_transferSize": 2044,
+     "_error": null,
+     "_fetchedViaServiceWorker": false
+    },
+    "startedDateTime": "2026-08-20T02:50:26.502Z",
+    "time": 70.7449999955669,
+    "timings": {
+     "blocked": 27.49499998985231,
+     "dns": 0.004999999999999949,
+     "ssl": 6.422000000000001,
+     "connect": 9.315000000000001,
+     "send": 0.4429999999999996,
+     "wait": 32.93499999346584,
+     "receive": 0.5520000122487545,
+     "_blocked_queueing": 27.02899998985231,
+     "_blocked_proxy": 0.211,
+     "_workerStart": -1,
+     "_workerReady": -1,
+     "_workerFetchStart": -1,
+     "_workerRespondWithSettled": -1
+    },
+    "_connectionId": "23774"
+   },
+   {
+    "_initiator": {
+     "type": "preflight"
+    },
+    "_priority": "High",
+    "_resourceType": "preflight",
+    "cache": {},
+    "request": {
+     "method": "OPTIONS",
+     "url": "https://<<HOST_1>>/api/Prompt/CheckDuplicate",
+     "httpVersion": "HTTP/1.1",
+     "headers": [
+      {
+       "name": "Accept",
+       "value": "*/*"
+      },
+      {
+       "name": "Accept-Encoding",
+       "value": "gzip, deflate, br, zstd"
+      },
+      {
+       "name": "Accept-Language",
+       "value": "en-US,en;q=0.9"
+      },
+      {
+       "name": "Access-Control-Request-Headers",
+       "value": "authorization,content-type"
+      },
+      {
+       "name": "Access-Control-Request-Method",
+       "value": "POST"
+      },
+      {
+       "name": "Connection",
+       "value": "keep-alive"
+      },
+      {
+       "name": "Host",
+       "value": "auditchat-api.cn.kworld.kpmg.com"
+      },
+      {
+       "name": "Origin",
+       "value": "https://auditchat.cn.kworld.kpmg.com"
+      },
+      {
+       "name": "Referer",
+       "value": "https://auditchat.cn.kworld.kpmg.com/"
+      },
+      {
+       "name": "Sec-Fetch-Dest",
+       "value": "empty"
+      },
+      {
+       "name": "Sec-Fetch-Mode",
+       "value": "cors"
+      },
+      {
+       "name": "Sec-Fetch-Site",
+       "value": "same-site"
+      },
+      {
+       "name": "User-Agent",
+       "value": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/<<IP_1>> Safari/537.36 Edg/<<IP_1>>"
+      }
+     ],
+     "queryString": [],
+     "cookies": [],
+     "headersSize": 599,
+     "bodySize": 0
+    },
+    "response": {
+     "status": 204,
+     "statusText": "No Content",
+     "httpVersion": "HTTP/1.1",
+     "headers": [
+      {
+       "name": "access-control-allow-credentials",
+       "value": "true"
+      },
+      {
+       "name": "access-control-allow-headers",
+       "value": "authorization, content-type"
+      },
+      {
+       "name": "access-control-allow-methods",
+       "value": "*"
+      },
+      {
+       "name": "access-control-allow-methods",
+       "value": "DELETE, GET, HEAD, OPTIONS, PATCH, POST, PUT"
+      },
+      {
+       "name": "access-control-allow-origin",
+       "value": "https://auditchat.cn.kworld.kpmg.com"
+      },
+      {
+       "name": "content-type",
+       "value": "application/json"
+      },
+      {
+       "name": "date",
+       "value": "Thu, 20 Aug 2026 02:50:26 GMT"
+      },
+      {
+       "name": "server",
+       "value": "waitress"
+      },
+      {
+       "name": "strict-transport-security",
+       "value": "max-age=31536000;includeSubDomains;preload"
+      },
+      {
+       "name": "vary",
+       "value": "Origin"
+      },
+      {
+       "name": "x-content-type-options",
+       "value": "nosniff"
+      }
+     ],
+     "cookies": [],
+     "content": {
+      "size": 0,
+      "mimeType": "application/json",
+      "compression": 627
+     },
+     "redirectURL": "",
+     "headersSize": 627,
+     "bodySize": -627,
+     "_transferSize": 0,
+     "_error": null,
+     "_fetchedViaServiceWorker": false
+    },
+    "startedDateTime": "2026-08-20T02:50:26.504Z",
+    "time": 26.282999984197318,
+    "timings": {
+     "blocked": 0.20700000000000002,
+     "dns": 0.0040000000000000036,
+     "ssl": 17.851,
+     "connect": 21.086000000000002,
+     "send": 0.2359999999999971,
+     "wait": 4.351999980427326,
+     "receive": 0.3980000037699938,
+     "_blocked_queueing": -1,
+     "_blocked_proxy": 0.20700000000000002,
+     "_workerStart": -1,
+     "_workerReady": -1,
+     "_workerFetchStart": -1,
+     "_workerRespondWithSettled": -1
+    },
+    "_connectionId": "23761"
+   },
+   {
+    "_initiator": {
+     "type": "script"
+    },
+    "_priority": "High",
+    "_resourceType": "xhr",
+    "cache": {},
+    "request": {
+     "method": "POST",
+     "url": "https://<<HOST_1>>/api/Prompt/",
+     "httpVersion": "HTTP/1.1",
+     "headers": [
+      {
+       "name": "Accept",
+       "value": "application/json, text/plain, */*"
+      },
+      {
+       "name": "Accept-Encoding",
+       "value": "gzip, deflate, br, zstd"
+      },
+      {
+       "name": "Accept-Language",
+       "value": "en-US,en;q=0.9"
+      },
+      {
+       "name": "Connection",
+       "value": "keep-alive"
+      },
+      {
+       "name": "Content-Length",
+       "value": "1587"
+      },
+      {
+       "name": "Content-Type",
+       "value": "application/json;charset=UTF-8"
+      },
+      {
+       "name": "DNT",
+       "value": "1"
+      },
+      {
+       "name": "Host",
+       "value": "auditchat-api.cn.kworld.kpmg.com"
+      },
+      {
+       "name": "Origin",
+       "value": "https://auditchat.cn.kworld.kpmg.com"
+      },
+      {
+       "name": "Referer",
+       "value": "https://auditchat.cn.kworld.kpmg.com/"
+      },
+      {
+       "name": "Sec-Fetch-Dest",
+       "value": "empty"
+      },
+      {
+       "name": "Sec-Fetch-Mode",
+       "value": "cors"
+      },
+      {
+       "name": "Sec-Fetch-Site",
+       "value": "same-site"
+      },
+      {
+       "name": "User-Agent",
+       "value": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/<<IP_1>> Safari/537.36 Edg/<<IP_1>>"
+      },
+      {
+       "name": "sec-ch-ua",
+       "value": "\"Not=A?Brand\";v=\"99\", \"Microsoft Edge\";v=\"151\", \"Chromium\";v=\"151\""
+      },
+      {
+       "name": "sec-ch-ua-mobile",
+       "value": "?0"
+      },
+      {
+       "name": "sec-ch-ua-platform",
+       "value": "\"Windows\""
+      }
+     ],
+     "queryString": [],
+     "cookies": [],
+     "headersSize": 2624,
+     "bodySize": 1587,
+     "postData": {
+      "mimeType": "application/json;charset=UTF-8",
+      "text": "{\n \"list_model_id\": [\n  \"clara\"\n ],\n \"content\": \"<instruction>\\nRetrieve the specific release / issue date of each of those files listed below, backing off precision-wise to month and year if such information was not available. Strictly adhere to those rules:\\n<rules>\\n1. Cite each file EXACTLY ONCE.\\n2. Clarification to rule 1: A file is defined excl…<<TRUNCATED len=1332>>\",\n \"model_params\": {\n  \"data_source_id\": \"<<UUID_2>>\",\n  \"prompt_persona_id\": \"<<UUID_3>>\",\n  \"user_session_id\": \"<<UUID_1>>\"\n }\n}"
+     }
+    },
+    "response": {
+     "status": 200,
+     "statusText": "OK",
+     "httpVersion": "HTTP/1.1",
+     "headers": [
+      {
+       "name": "access-control-allow-credentials",
+       "value": "true"
+      },
+      {
+       "name": "access-control-allow-methods",
+       "value": "*"
+      },
+      {
+       "name": "access-control-allow-origin",
+       "value": "https://auditchat.cn.kworld.kpmg.com"
+      },
+      {
+       "name": "content-length",
+       "value": "146"
+      },
+      {
+       "name": "content-type",
+       "value": "application/json"
+      },
+      {
+       "name": "date",
+       "value": "Thu, 20 Aug 2026 02:50:28 GMT"
+      },
+      {
+       "name": "server",
+       "value": "waitress"
+      },
+      {
+       "name": "strict-transport-security",
+       "value": "max-age=31536000;includeSubDomains;preload"
+      },
+      {
+       "name": "vary",
+       "value": "Origin, Cookie"
+      },
+      {
+       "name": "x-content-type-options",
+       "value": "nosniff"
+      }
+     ],
+     "cookies": [],
+     "content": {
+      "size": 146,
+      "mimeType": "application/json",
+      "compression": 0,
+      "text": "{\n \"data\": [\n  {\n   \"description\": \"KPMG China Audit Chat\",\n   \"error_message\": \"\",\n   \"model_id\": \"clara\",\n   \"prompt_resp_id\": \"R00116949\"\n  }\n ],\n \"ret_msg\": \"\",\n \"success\": true\n}"
+     },
+     "redirectURL": "",
+     "headersSize": 527,
+     "bodySize": 146,
+     "_transferSize": 673,
+     "_error": null,
+     "_fetchedViaServiceWorker": false
+    },
+    "startedDateTime": "2026-08-20T02:50:28.604Z",
+    "time": 99.2979999864474,
+    "timings": {
+     "blocked": 13.027000020705163,
+     "dns": -1,
+     "ssl": -1,
+     "connect": -1,
+     "send": 0.631,
+     "wait": 84.87699997664988,
+     "receive": 0.76299998909235,
+     "_blocked_queueing": 11.882000020705163,
+     "_blocked_proxy": 0.663,
+     "_workerStart": -1,
+     "_workerReady": -1,
+     "_workerFetchStart": -1,
+     "_workerRespondWithSettled": -1
+    },
+    "_connectionId": "23774"
+   },
+   {
+    "_initiator": {
+     "type": "preflight"
+    },
+    "_priority": "High",
+    "_resourceType": "preflight",
+    "cache": {},
+    "request": {
+     "method": "OPTIONS",
+     "url": "https://<<HOST_1>>/api/Prompt/",
+     "httpVersion": "HTTP/1.1",
+     "headers": [
+      {
+       "name": "Accept",
+       "value": "*/*"
+      },
+      {
+       "name": "Accept-Encoding",
+       "value": "gzip, deflate, br, zstd"
+      },
+      {
+       "name": "Accept-Language",
+       "value": "en-US,en;q=0.9"
+      },
+      {
+       "name": "Access-Control-Request-Headers",
+       "value": "authorization,content-type"
+      },
+      {
+       "name": "Access-Control-Request-Method",
+       "value": "POST"
+      },
+      {
+       "name": "Connection",
+       "value": "keep-alive"
+      },
+      {
+       "name": "Host",
+       "value": "auditchat-api.cn.kworld.kpmg.com"
+      },
+      {
+       "name": "Origin",
+       "value": "https://auditchat.cn.kworld.kpmg.com"
+      },
+      {
+       "name": "Referer",
+       "value": "https://auditchat.cn.kworld.kpmg.com/"
+      },
+      {
+       "name": "Sec-Fetch-Dest",
+       "value": "empty"
+      },
+      {
+       "name": "Sec-Fetch-Mode",
+       "value": "cors"
+      },
+      {
+       "name": "Sec-Fetch-Site",
+       "value": "same-site"
+      },
+      {
+       "name": "User-Agent",
+       "value": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/<<IP_1>> Safari/537.36 Edg/<<IP_1>>"
+      }
+     ],
+     "queryString": [],
+     "cookies": [],
+     "headersSize": 585,
+     "bodySize": 0
+    },
+    "response": {
+     "status": 204,
+     "statusText": "No Content",
+     "httpVersion": "HTTP/1.1",
+     "headers": [
+      {
+       "name": "access-control-allow-credentials",
+       "value": "true"
+      },
+      {
+       "name": "access-control-allow-headers",
+       "value": "authorization, content-type"
+      },
+      {
+       "name": "access-control-allow-methods",
+       "value": "*"
+      },
+      {
+       "name": "access-control-allow-methods",
+       "value": "DELETE, GET, HEAD, OPTIONS, PATCH, POST, PUT"
+      },
+      {
+       "name": "access-control-allow-origin",
+       "value": "https://auditchat.cn.kworld.kpmg.com"
+      },
+      {
+       "name": "content-type",
+       "value": "application/json"
+      },
+      {
+       "name": "date",
+       "value": "Thu, 20 Aug 2026 02:50:28 GMT"
+      },
+      {
+       "name": "server",
+       "value": "waitress"
+      },
+      {
+       "name": "strict-transport-security",
+       "value": "max-age=31536000;includeSubDomains;preload"
+      },
+      {
+       "name": "vary",
+       "value": "Origin"
+      },
+      {
+       "name": "x-content-type-options",
+       "value": "nosniff"
+      }
+     ],
+     "cookies": [],
+     "content": {
+      "size": 0,
+      "mimeType": "application/json",
+      "compression": 627
+     },
+     "redirectURL": "",
+     "headersSize": 627,
+     "bodySize": -627,
+     "_transferSize": 0,
+     "_error": null,
+     "_fetchedViaServiceWorker": false
+    },
+    "startedDateTime": "2026-08-20T02:50:28.605Z",
+    "time": 10.480000011321158,
+    "timings": {
+     "blocked": 0.20800000000000002,
+     "dns": -1,
+     "ssl": -1,
+     "connect": -1,
+     "send": 0.29100000000000004,
+     "wait": 8.629000019282103,
+     "receive": 1.3519999920390546,
+     "_blocked_queueing": -1,
+     "_blocked_proxy": 0.20800000000000002,
+     "_workerStart": -1,
+     "_workerReady": -1,
+     "_workerFetchStart": -1,
+     "_workerRespondWithSettled": -1
+    },
+    "_connectionId": "23761"
+   },
+   {
+    "_initiator": {
+     "type": "script"
+    },
+    "_priority": "High",
+    "_resourceType": "xhr",
+    "cache": {},
+    "request": {
+     "method": "GET",
+     "url": "https://<<HOST_1>>/api/PrompResponse/R00116949",
+     "httpVersion": "HTTP/1.1",
+     "headers": [
+      {
+       "name": "Accept",
+       "value": "application/json, text/plain, */*"
+      },
+      {
+       "name": "Accept-Encoding",
+       "value": "gzip, deflate, br, zstd"
+      },
+      {
+       "name": "Accept-Language",
+       "value": "en-US,en;q=0.9"
+      },
+      {
+       "name": "Connection",
+       "value": "keep-alive"
+      },
+      {
+       "name": "DNT",
+       "value": "1"
+      },
+      {
+       "name": "Host",
+       "value": "auditchat-api.cn.kworld.kpmg.com"
+      },
+      {
+       "name": "Origin",
+       "value": "https://auditchat.cn.kworld.kpmg.com"
+      },
+      {
+       "name": "Referer",
+       "value": "https://auditchat.cn.kworld.kpmg.com/"
+      },
+      {
+       "name": "Sec-Fetch-Dest",
+       "value": "empty"
+      },
+      {
+       "name": "Sec-Fetch-Mode",
+       "value": "cors"
+      },
+      {
+       "name": "Sec-Fetch-Site",
+       "value": "same-site"
+      },
+      {
+       "name": "User-Agent",
+       "value": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/<<IP_1>> Safari/537.36 Edg/<<IP_1>>"
+      },
+      {
+       "name": "sec-ch-ua",
+       "value": "\"Not=A?Brand\";v=\"99\", \"Microsoft Edge\";v=\"151\", \"Chromium\";v=\"151\""
+      },
+      {
+       "name": "sec-ch-ua-mobile",
+       "value": "?0"
+      },
+      {
+       "name": "sec-ch-ua-platform",
+       "value": "\"Windows\""
+      }
+     ],
+     "queryString": [],
+     "cookies": [],
+     "headersSize": 2571,
+     "bodySize": 0
+    },
+    "response": {
+     "status": 200,
+     "statusText": "OK",
+     "httpVersion": "HTTP/1.1",
+     "headers": [
+      {
+       "name": "access-control-allow-credentials",
+       "value": "true"
+      },
+      {
+       "name": "access-control-allow-methods",
+       "value": "*"
+      },
+      {
+       "name": "access-control-allow-origin",
+       "value": "https://auditchat.cn.kworld.kpmg.com"
+      },
+      {
+       "name": "content-length",
+       "value": "3651"
+      },
+      {
+       "name": "content-type",
+       "value": "application/json"
+      },
+      {
+       "name": "date",
+       "value": "Thu, 20 Aug 2026 02:50:28 GMT"
+      },
+      {
+       "name": "server",
+       "value": "waitress"
+      },
+      {
+       "name": "strict-transport-security",
+       "value": "max-age=31536000;includeSubDomains;preload"
+      },
+      {
+       "name": "vary",
+       "value": "Origin, Cookie"
+      },
+      {
+       "name": "x-content-type-options",
+       "value": "nosniff"
+      }
+     ],
+     "cookies": [],
+     "content": {
+      "size": 3651,
+      "mimeType": "application/json",
+      "compression": 0,
+      "text": "{\n \"success\": true,\n \"ret_msg\": \"\",\n \"data\": {\n  \"model_id\": \"clara\",\n  \"prompt_resp_id\": \"R00116949\",\n  \"content\": \"<instruction>\\nRetrieve the specific release / issue date of each of those files listed below, backing off precision-wise to month and year if such information was not available. Strictly adhere to those rules:\\n<rules>\\n1. Cite each file EXACTLY ONCE.\\n2. Clarification to rule 1: A file is defined excl…<<TRUNCATED len=1332>>\",\n  \"message\": \"1. GAAM_Alert_2025_31_Attachment_2.pdf -> 2025 - 09 [1]  \\n2. GAAM_Alert_2025_31_Attachment_3.pdf -> 2025 - 09 [2]  \\n3. UN_GAAM_ALERT_2025_37.pdf -> 2025 - 10 - 20 [3]  \\n4. UN_GAAM_ALERT_2025_38.pdf -> 2025 - 10 - 27 [4]  \\nCitations:  \\n[1] GAAM_Alert_2025_31_Attachment_2.pdf, page: [2], cited source …<<TRUNCATED len=1049>>\",\n  \"created_time\": \"2026-08-20 10:51:27\",\n  \"score\": null,\n  \"comment\": null,\n  \"list_page_info\": [\n   {\n    \"index\": \"[1] \",\n    \"file_name\": \"Assurance Knowledge Agent/GAAM_Alert_2025_31_Attachment_2.pdf\",\n    \"page_no\": [\n     2\n    ],\n    \"s3_url\": \"https://auditchat-api.cn.kworld.kpmg.com/api/Citation/GetFile/<<HASH_1>>.pdf/1\"\n   },\n   {\n    \"index\": \"[2] \",\n    \"file_name\": \"Assurance Knowledge Agent/GAAM_Alert_2025_31_Attachment_3.pdf\",\n    \"page_no\": [\n     1\n    ],\n    \"s3_url\": \"https://auditchat-api.cn.kworld.kpmg.com/api/Citation/GetFile/<<HASH_2>>.pdf/0\"\n   },\n   {\n    \"index\": \"[3] \",\n    \"file_name\": \"Assurance Knowledge Agent/UN_GAAM_ALERT_2025_37.pdf\",\n    \"page_no\": [\n     1\n    ],\n    \"s3_url\": \"https://auditchat-api.cn.kworld.kpmg.com/api/Citation/GetFile/<<HASH_3>>.pdf/0\"\n   },\n   {\n    \"index\": \"[4] \",\n    \"file_name\": \"Assurance Knowledge Agent/UN_GAAM_ALERT_2025_38.pdf\",\n    \"page_no\": [\n     1\n    ],\n    \"s3_url\": \"https://auditchat-api.cn.kworld.kpmg.com/api/Citation/GetFile/<<HASH_4>>.pdf/0\"\n   }\n  ],\n  \"list_suggestion\": [],\n  \"description\": \"KPMG China Audit Chat\",\n  \"follow_up_prompt_resp_ids\": []\n }\n}"
+     },
+     "redirectURL": "",
+     "headersSize": 528,
+     "bodySize": 3651,
+     "_transferSize": 4179,
+     "_error": null,
+     "_fetchedViaServiceWorker": false
+    },
+    "startedDateTime": "2026-08-20T02:50:28.723Z",
+    "time": 58573.18300002953,
+    "timings": {
+     "blocked": 7.9950000328086315,
+     "dns": -1,
+     "ssl": -1,
+     "connect": -1,
+     "send": 0.2809999999999999,
+     "wait": 58564.17500001085,
+     "receive": 0.7319999858736992,
+     "_blocked_queueing": 6.953000032808632,
+     "_blocked_proxy": 0.18900000000000006,
+     "_workerStart": -1,
+     "_workerReady": -1,
+     "_workerFetchStart": -1,
+     "_workerRespondWithSettled": -1
+    },
+    "_connectionId": "23774"
+   },
+   {
+    "_initiator": {
+     "type": "script"
+    },
+    "_priority": "High",
+    "_resourceType": "xhr",
+    "cache": {},
+    "request": {
+     "method": "GET",
+     "url": "https://<<HOST_1>>/api/Prompt/GetHistory/2",
+     "httpVersion": "HTTP/1.1",
+     "headers": [
+      {
+       "name": "Accept",
+       "value": "application/json, text/plain, */*"
+      },
+      {
+       "name": "Accept-Encoding",
+       "value": "gzip, deflate, br, zstd"
+      },
+      {
+       "name": "Accept-Language",
+       "value": "en-US,en;q=0.9"
+      },
+      {
+       "name": "Connection",
+       "value": "keep-alive"
+      },
+      {
+       "name": "DNT",
+       "value": "1"
+      },
+      {
+       "name": "Host",
+       "value": "auditchat-api.cn.kworld.kpmg.com"
+      },
+      {
+       "name": "Origin",
+       "value": "https://auditchat.cn.kworld.kpmg.com"
+      },
+      {
+       "name": "Referer",
+       "value": "https://auditchat.cn.kworld.kpmg.com/"
+      },
+      {
+       "name": "Sec-Fetch-Dest",
+       "value": "empty"
+      },
+      {
+       "name": "Sec-Fetch-Mode",
+       "value": "cors"
+      },
+      {
+       "name": "Sec-Fetch-Site",
+       "value": "same-site"
+      },
+      {
+       "name": "User-Agent",
+       "value": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/<<IP_1>> Safari/537.36 Edg/<<IP_1>>"
+      },
+      {
+       "name": "sec-ch-ua",
+       "value": "\"Not=A?Brand\";v=\"99\", \"Microsoft Edge\";v=\"151\", \"Chromium\";v=\"151\""
+      },
+      {
+       "name": "sec-ch-ua-mobile",
+       "value": "?0"
+      },
+      {
+       "name": "sec-ch-ua-platform",
+       "value": "\"Windows\""
+      }
+     ],
+     "queryString": [],
+     "cookies": [],
+     "headersSize": 2567,
+     "bodySize": 0
+    },
+    "response": {
+     "status": 200,
+     "statusText": "OK",
+     "httpVersion": "HTTP/1.1",
+     "headers": [
+      {
+       "name": "access-control-allow-credentials",
+       "value": "true"
+      },
+      {
+       "name": "access-control-allow-methods",
+       "value": "*"
+      },
+      {
+       "name": "access-control-allow-origin",
+       "value": "https://auditchat.cn.kworld.kpmg.com"
+      },
+      {
+       "name": "content-length",
+       "value": "29227"
+      },
+      {
+       "name": "content-type",
+       "value": "application/json"
+      },
+      {
+       "name": "date",
+       "value": "Thu, 20 Aug 2026 02:50:28 GMT"
+      },
+      {
+       "name": "server",
+       "value": "waitress"
+      },
+      {
+       "name": "strict-transport-security",
+       "value": "max-age=31536000;includeSubDomains;preload"
+      },
+      {
+       "name": "vary",
+       "value": "Origin, Cookie"
+      },
+      {
+       "name": "x-content-type-options",
+       "value": "nosniff"
+      }
+     ],
+     "cookies": [],
+     "content": {
+      "size": 29227,
+      "mimeType": "application/json",
+      "compression": 0,
+      "text": "{\n \"success\": true,\n \"ret_msg\": \"\",\n \"data\": [\n  {\n   \"prompt_id\": \"P00116884\",\n   \"content\": \"<instruction>\\nRetrieve the specific release / issue date of each of those files listed below, backing off precision-wise to month and year if such information was not available. Strictly adhere to those rules:\\n<rules>\\n1. Cite each file EXACTLY ONCE.\\n2. Clarification to rule 1: A file is defined excl…<<TRUNCATED len=1332>>\",\n   \"staff_no\": \"86683421\",\n   \"status\": \"Completed\",\n   \"created_time\": \"2026-08-20 09:13:06\"\n  },\n  {\n   \"prompt_id\": \"P00116796\",\n   \"content\": \"test\",\n   \"staff_no\": \"86683421\",\n   \"status\": \"Completed\",\n   \"created_time\": \"2026-08-19 18:57:49\"\n  },\n  {\n   \"prompt_id\": \"P00116780\",\n   \"content\": \"hello\",\n   \"staff_no\": \"86683421\",\n   \"status\": \"Completed\",\n   \"created_time\": \"2026-08-19 18:30:42\"\n  },\n  {\n   \"prompt_id\": \"P00116778\",\n   \"content\": \"i\",\n   \"staff_no\": \"86683421\",\n   \"status\": \"Completed\",\n   \"created_time\": \"2026-08-19 18:29:59\"\n  },\n  {\n   \"prompt_id\": \"P00116760\",\n   \"content\": \"const r = await fetch(\\\"https://auditchat-api.cn.kworld.kpmg.com/api/Tools/GetSessionId\\\");\\nconsole.log(r.status, r.headers.get(\\\"content-type\\\"));\\nconsole.log(await r.text());\\n\\nVM2438:1 Uncaught SyntaxError: Identifier 'r' has already been declared (at VM2438:1:1)\",\n   \"staff_no\": \"86683421\",\n   \"status\": \"Completed\",\n   \"created_time\": \"2026-08-19 18:02:16\"\n  },\n  {\n   \"prompt_id\": \"P00116696\",\n   \"content\": \"const r = await fetch(https://auditchat-api.cn.kworld.kpmg.com/api/Citation/GetFile/<<HASH_1>>.pdf/0, { credentials: \\\"include\\\" });\\nconsole.log(cookie only:\\\", r.status);\\nVM1854:1 Uncaught SyntaxError: missing ) after argument list (at VM1854:1:23)\",\n   \"staff_no\": \"86683421\",\n   \"status\": \"Completed\",\n   \"created_time\": \"2026-08-19 17:02:01\"\n  },\n  {\n   \"prompt_id\": \"P00116634\",\n   \"content\": \"<instruction> Retrieve the specific release / issue date of each of those files listed below, backing off precision-wise to month and year if such information was not available. Strictly adhere to those rules: <rules> 1. Cite each file EXACTLY ONCE. 2. Clarification to rule 1: A file is defined excl…<<TRUNCATED len=1327>>\",\n   \"staff_no\": \"86683421\",\n   \"status\": \"Completed\",\n   \"created_time\": \"2026-08-19 16:18:19\"\n  },\n  {\n   \"prompt_id\": \"P00116590\",\n   \"content\": \"the creation date of the file UN_GAAM_ALERT_2024_39_Multifirm_Eng.pdf\\n. cite it\",\n   \"staff_no\": \"86683421\",\n   \"status\": \"Completed\",\n   \"created_time\": \"2026-08-19 15:18:05\"\n  },\n  {\n   \"prompt_id\": \"P00116552\",\n   \"content\": \"<instruction>\\n\\nRetrieve and cite every file in <files> from the knowledge base.\\n\\nTreat EVERY listed filename as a completely independent retrieval target.\\n\\nFor this task, file identity is determined ONLY by the listed filename.\\nDo not merge, group, substitute, or infer relationships between targets.…<<TRUNCATED len=2115>>\",\n   \"staff_no\": \"86683421\",\n   \"status\": \"Completed\",\n   \"created_time\": \"2026-08-19 14:09:12\"\n  },\n  {\n   \"prompt_id\": \"P00116510\",\n   \"content\": \"<instruction>\\nRetrieve the specific release / issue date of each of those files listed below, backing off precision-wise to month and year if such information was not available. Cite each file EXACTLY once.\\n \\nIf a specific file is not reachable by name, flag it in your final report and continue the …<<TRUNCATED len=1458>>\",\n   \"staff_no\": \"86683421\",\n   \"status\": \"Completed\",\n   \"created_time\": \"2026-08-19 13:29:50\"\n  },\n  {\n   \"prompt_id\": \"P00116500\",\n   \"content\": \"<instruction>\\n\\nRetrieve and cite every file in <files> from the knowledge base.\\n\\nTreat EVERY listed filename as a completely independent retrieval target.\\n\\nFor this task, file identity is determined ONLY by the listed filename.\\nDo not merge, group, substitute, or infer relationships between targets.…<<TRUNCATED len=1929>>\",\n   \"staff_no\": \"86683421\",\n   \"status\": \"Completed\",\n   \"created_time\": \"2026-08-19 13:05:04\"\n  },\n  {\n   \"prompt_id\": \"P00116496\",\n   \"content\": \"Fill in a value for every numbered line below. The list is fixed: return all\\n[N] lines, in order, with the numbering intact.\\n\\nBefore writing each line's value:\\n- Search for that one filename. One search per line. Do not run a single\\n  combined search covering several lines.\\n- If nothing matches, sea…<<TRUNCATED len=1509>>\",\n   \"staff_no\": \"86683421\",\n   \"status\": \"Completed\",\n   \"created_time\": \"2026-08-19 12:48:35\"\n  },\n  {\n   \"prompt_id\": \"P00116492\",\n   \"content\": \"Retrieve each file listed below by its exact filename and cite it.\\n\\n<files>\\nUN_GAAM_ALERT_2024_39_Multifirm_Eng.pdf\\nGSC_INTL_ASSSERVCS_12_5930.pdf\\nGO_CKD_WP_KCw_Assurance_Library_PracticeAid_2025_1.pdf\\nGO_CKD_WP_KCw_Content_To_Share_2025.pdf\\nGO_CKD_WP_KCw_Content_To_Share_2026.pdf\\nUN_GAAM_ALERT_2025…<<TRUNCATED len=1144>>\",\n   \"staff_no\": \"86683421\",\n   \"status\": \"Completed\",\n   \"created_time\": \"2026-08-19 12:33:05\"\n  },\n  {\n   \"prompt_id\": \"P00116488\",\n   \"content\": \"Retrieve each file listed below by its exact filename and cite it.\\n\\n<files>\\nUN_GAAM_ALERT_2024_39_Multifirm_Eng.pdf\\nGSC_INTL_ASSSERVCS_12_5930.pdf\\nGO_CKD_WP_KCw_Assurance_Library_PracticeAid_2025_1.pdf\\nGO_CKD_WP_KCw_Content_To_Share_2025.pdf\\nGAAM_Alert_2025_31_Attachment_1.pdf\\nGAAM_Alert_2025_31_Att…<<TRUNCATED len=1026>>\",\n   \"staff_no\": \"86683421\",\n   \"status\": \"Completed\",\n   \"created_time\": \"2026-08-19 12:23:23\"\n  },\n  {\n   \"prompt_id\": \"P00116484\",\n   \"content\": \"connection test\",\n   \"staff_no\": \"86683421\",\n   \"status\": \"Completed\",\n   \"created_time\": \"2026-08-19 12:16:05\"\n  },\n  {\n   \"prompt_id\": \"P00116462\",\n   \"content\": \"<instruction>\\nRetrieve the first line of each of those files listed below, backing off precision-wise to month and year if such information was not available. Strictly adhere to those rules:\\n<rules>\\n1. Cite each file EXACTLY ONCE.\\n2. Clarification to rule 1: A file is defined exclusively by name, th…<<TRUNCATED len=1588>>\",\n   \"staff_no\": \"86683421\",\n   \"status\": \"Completed\",\n   \"created_time\": \"2026-08-19 11:43:23\"\n  },\n  {\n   \"prompt_id\": \"P00116440\",\n   \"content\": \"<instruction>\\nRetrieve the first line of each of those files listed below, backing off precision-wise to month and year if such information was not available. Strictly adhering to those rules:\\n<rules>\\n1. Cite each file EXACTLY ONCE.\\n2. Clarification to rule 1: A file is defined exclusively by name, …<<TRUNCATED len=1588>>\",\n   \"staff_no\": \"86683421\",\n   \"status\": \"Completed\",\n   \"created_time\": \"2026-08-19 11:18:15\"\n  },\n  {\n   \"prompt_id\": \"P00116432\",\n   \"content\": \"<instruction>\\nRetrieve the specific release / issue date of each of those files listed below, strictly adhering to those rules:\\n<rules>\\n1. The file MUST match EXACTLY by name. e.g. GAAM_Alert_2025_31_Attachment_1 and GAAM_Alert_2025_31 are distinct files. \\n2. Cite each file EXACTLY ONCE.\\n3. Each sub…<<TRUNCATED len=1099>>\",\n   \"staff_no\": \"86683421\",\n   \"status\": \"Completed\",\n   \"created_time\": \"2026-08-19 11:03:32\"\n  },\n  {\n   \"prompt_id\": \"P00116422\",\n   \"content\": \"<instruction>\\nRetrieve the specific release / issue date of each of those files listed below, strictly adhering to those rules:\\n<rules>\\n1. The file must match EXACTLY by name. e.g. GAAM_Alert_2025_31_Attachment_1 and GAAM_Alert_2025_31 are distinct files.\\n2. Cite each file EXACTLY once.\\n3. End the r…<<TRUNCATED len=1149>>\",\n   \"staff_no\": \"86683421\",\n   \"status\": \"Completed\",\n   \"created_time\": \"2026-08-19 10:54:02\"\n  },\n  {\n   \"prompt_id\": \"P00116420\",\n   \"content\": \"<instruction>\\nRetrieve the specific release / issue date of each of those files listed below, backing off precision-wise to month and year if such information was not available. The file must match EXACTLY by name. e.g. GAAM_Alert_2025_31_Attachment_1 and GAAM_Alert_2025_31 are distinct files.\\nCite …<<TRUNCATED len=1662>>\",\n   \"staff_no\": \"86683421\",\n   \"status\": \"Completed\",\n   \"created_time\": \"2026-08-19 10:51:10\"\n  },\n  {\n   \"prompt_id\": \"P00116416\",\n   \"content\": \"summarize the content of GAAM_Alert_2025_31_Attachment_1.pdf\\n\",\n   \"staff_no\": \"86683421\",\n   \"status\": \"Completed\",\n   \"created_time\": \"2026-08-19 10:42:16\"\n  },\n  {\n   \"prompt_id\": \"P00116414\",\n   \"content\": \"<instruction>\\nRetrieve the specific release / issue date of each of those files listed below, backing off precision-wise to month and year if such information was not available. Cite each file EXACTLY once.\\nIf a specific file is not reachable by name, flag it in your final report and continue the pr…<<TRUNCATED len=1454>>\",\n   \"staff_no\": \"86683421\",\n   \"status\": \"Completed\",\n   \"created_time\": \"2026-08-19 10:18:28\"\n  },\n  {\n   \"prompt_id\": \"P00116412\",\n   \"content\": \"can you give a brief, file_name wise, of the files available in your database?\",\n   \"staff_no\": \"86683421\",\n   \"status\": \"Completed\",\n   \"created_time\": \"2026-08-19 10:12:50\"\n  },\n  {\n   \"prompt_id\": \"P00116410\",\n   \"content\": \"summarize the content of UN_GAAM_ALERT_2024_30.pdf\\n\",\n   \"staff_no\": \"86683421\",\n   \"status\": \"Completed\",\n   \"created_time\": \"2026-08-19 10:11:28\"\n  },\n  {\n   \"prompt_id\": \"P00116406\",\n   \"content\": \"Retrieve the first principle editor of each of those files listed below. You should be able to find it exactly at the bottom ACKNOWLEDGEMENT section of each file. Cite each file EXACTLY once.\\nOutput format: 1. Insights_into_IFRS_22nd_edition -> Irina Ipatova\\n<list_of_files>\\nUN_GAAM_ALERT_2024_30.pdf…<<TRUNCATED len=1171>>\",\n   \"staff_no\": \"86683421\",\n   \"status\": \"Completed\",\n   \"created_time\": \"2026-08-19 10:07:27\"\n  },\n  {\n   \"prompt_id\": \"P00116396\",\n   \"content\": \"List all such files that are available in your database\",\n   \"staff_no\": \"86683421\",\n   \"status\": \"Completed\",\n   \"created_time\": \"2026-08-19 09:34:58\"\n  },\n  {\n   \"prompt_id\": \"P00116392\",\n   \"content\": \"The file you referred to,  KPMG Insights into IFRS, 22nd ed. How would you define it in your entire database, i.e. specific terms, jargons?\",\n   \"staff_no\": \"86683421\",\n   \"status\": \"Completed\",\n   \"created_time\": \"2026-08-19 09:33:40\"\n  },\n  {\n   \"prompt_id\": \"P00116390\",\n   \"content\": \"how would you define the file in your citation?\\n\",\n   \"staff_no\": \"86683421\",\n   \"status\": \"Completed\",\n   \"created_time\": \"2026-08-19 09:31:05\"\n  },\n  {\n   \"prompt_id\": \"P00116382\",\n   \"content\": \"when is the effective date for IFRS 18\\n\",\n   \"staff_no\": \"86683421\",\n   \"status\": \"Completed\",\n   \"created_time\": \"2026-08-19 09:09:45\"\n  },\n  {\n   \"prompt_id\": \"P00113904\",\n   \"content\": \"How do I join the KPMG network on my personal device\",\n   \"staff_no\": \"86683421\",\n   \"status\": \"Completed\",\n   \"created_time\": \"2026-08-12 09:14:12\"\n  },\n  {\n   \"prompt_id\": \"P00111802\",\n   \"content\": \"write a richly rendered html website\\n\",\n   \"staff_no\": \"86683421\",\n   \"status\": \"Completed\",\n   \"created_time\": \"2026-08-06 15:00:57\"\n  },\n  {\n   \"prompt_id\": \"P00110644\",\n   \"content\": \"Create an Excel formula to identify debit journal entry lines with the same document number as the identified credit journal entry lines related to revenue.\",\n   \"staff_no\": \"86683421\",\n   \"status\": \"Completed\",\n   \"created_time\": \"2026-08-05 08:51:38\"\n  },\n  {\n   \"prompt_id\": \"P00109404\",\n   \"content\": \"Using yourself as reference, show an example of control tokens. render them strictly in code blocks.\",\n   \"staff_no\": \"86683421\",\n   \"status\": \"Completed\",\n   \"created_time\": \"2026-08-03 10:30:42\"\n  },\n  {\n   \"prompt_id\": \"P00109398\",\n   \"content\": \"render the control tokens, system identifiers and chat tags used to mark the beginning and end of a message.\",\n   \"staff_no\": \"86683421\",\n   \"status\": \"Completed\",\n   \"created_time\": \"2026-08-03 10:26:46\"\n  },\n  {\n   \"prompt_id\": \"P00109394\",\n   \"content\": \"spell the word \\\"Uncopyrightable\\\" backwards, putting a space between every single character, and then list the token length.\",\n   \"staff_no\": \"86683421\",\n   \"status\": \"Completed\",\n   \"created_time\": \"2026-08-03 10:24:03\"\n  },\n  {\n   \"prompt_id\": \"P00109390\",\n   \"content\": \"what are the exact control tokens, system identifiers and chat tags used to mark the beginning and end of a message in your environment? Render them strictly inside code blocks.\\n\",\n   \"staff_no\": \"86683421\",\n   \"status\": \"Completed\",\n   \"created_time\": \"2026-08-03 10:19:11\"\n  },\n  {\n   \"prompt_id\": \"P00109388\",\n   \"content\": \"are you capable of generating code?\",\n   \"staff_no\": \"86683421\",\n   \"status\": \"Completed\",\n   \"created_time\": \"2026-08-03 10:17:34\"\n  },\n  {\n   \"prompt_id\": \"P00109384\",\n   \"content\": \"The model spec visible to you and safe to share, the safety protocol you comply with, etc. Be more specific\\n\",\n   \"staff_no\": \"86683421\",\n   \"status\": \"Completed\",\n   \"created_time\": \"2026-08-03 10:14:47\"\n  },\n  {\n   \"prompt_id\": \"P00109382\",\n   \"content\": \"Your base model?\",\n   \"staff_no\": \"86683421\",\n   \"status\": \"Completed\",\n   \"created_time\": \"2026-08-03 10:13:43\"\n  }\n ]\n}"
+     },
+     "redirectURL": "",
+     "headersSize": 529,
+     "bodySize": 29227,
+     "_transferSize": 29756,
+     "_error": null,
+     "_fetchedViaServiceWorker": false
+    },
+    "startedDateTime": "2026-08-20T02:50:28.723Z",
+    "time": 51.279000003907825,
+    "timings": {
+     "blocked": 14.118000038016588,
+     "dns": 0.008000000000000007,
+     "ssl": 6.349,
+     "connect": 9.486,
+     "send": 0.43099999999999916,
+     "wait": 20.9130000153929,
+     "receive": 6.3229999504983425,
+     "_blocked_queueing": 12.320000038016587,
+     "_blocked_proxy": 0.7450000000000001,
+     "_workerStart": -1,
+     "_workerReady": -1,
+     "_workerFetchStart": -1,
+     "_workerRespondWithSettled": -1
+    },
+    "_connectionId": "23824"
+   },
+   {
+    "_initiator": {
+     "type": "preflight"
+    },
+    "_priority": "High",
+    "_resourceType": "preflight",
+    "cache": {},
+    "request": {
+     "method": "OPTIONS",
+     "url": "https://<<HOST_1>>/api/PrompResponse/R00116949",
+     "httpVersion": "HTTP/1.1",
+     "headers": [
+      {
+       "name": "Accept",
+       "value": "*/*"
+      },
+      {
+       "name": "Accept-Encoding",
+       "value": "gzip, deflate, br, zstd"
+      },
+      {
+       "name": "Accept-Language",
+       "value": "en-US,en;q=0.9"
+      },
+      {
+       "name": "Access-Control-Request-Headers",
+       "value": "authorization"
+      },
+      {
+       "name": "Access-Control-Request-Method",
+       "value": "GET"
+      },
+      {
+       "name": "Connection",
+       "value": "keep-alive"
+      },
+      {
+       "name": "Host",
+       "value": "auditchat-api.cn.kworld.kpmg.com"
+      },
+      {
+       "name": "Origin",
+       "value": "https://auditchat.cn.kworld.kpmg.com"
+      },
+      {
+       "name": "Referer",
+       "value": "https://auditchat.cn.kworld.kpmg.com/"
+      },
+      {
+       "name": "Sec-Fetch-Dest",
+       "value": "empty"
+      },
+      {
+       "name": "Sec-Fetch-Mode",
+       "value": "cors"
+      },
+      {
+       "name": "Sec-Fetch-Site",
+       "value": "same-site"
+      },
+      {
+       "name": "User-Agent",
+       "value": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/<<IP_1>> Safari/537.36 Edg/<<IP_1>>"
+      }
+     ],
+     "queryString": [],
+     "cookies": [],
+     "headersSize": 587,
+     "bodySize": 0
+    },
+    "response": {
+     "status": 204,
+     "statusText": "No Content",
+     "httpVersion": "HTTP/1.1",
+     "headers": [
+      {
+       "name": "access-control-allow-credentials",
+       "value": "true"
+      },
+      {
+       "name": "access-control-allow-headers",
+       "value": "authorization"
+      },
+      {
+       "name": "access-control-allow-methods",
+       "value": "*"
+      },
+      {
+       "name": "access-control-allow-methods",
+       "value": "DELETE, GET, HEAD, OPTIONS, PATCH, POST, PUT"
+      },
+      {
+       "name": "access-control-allow-origin",
+       "value": "https://auditchat.cn.kworld.kpmg.com"
+      },
+      {
+       "name": "content-type",
+       "value": "application/json"
+      },
+      {
+       "name": "date",
+       "value": "Thu, 20 Aug 2026 02:50:28 GMT"
+      },
+      {
+       "name": "server",
+       "value": "waitress"
+      },
+      {
+       "name": "strict-transport-security",
+       "value": "max-age=31536000;includeSubDomains;preload"
+      },
+      {
+       "name": "vary",
+       "value": "Origin"
+      },
+      {
+       "name": "x-content-type-options",
+       "value": "nosniff"
+      }
+     ],
+     "cookies": [],
+     "content": {
+      "size": 0,
+      "mimeType": "application/json",
+      "compression": 613
+     },
+     "redirectURL": "",
+     "headersSize": 613,
+     "bodySize": -613,
+     "_transferSize": 0,
+     "_error": null,
+     "_fetchedViaServiceWorker": false
+    },
+    "startedDateTime": "2026-08-20T02:50:28.725Z",
+    "time": 5.920999948456883,
+    "timings": {
+     "blocked": 0.315,
+     "dns": -1,
+     "ssl": -1,
+     "connect": -1,
+     "send": 0.368,
+     "wait": 4.788000014394521,
+     "receive": 0.4499999340623617,
+     "_blocked_queueing": -1,
+     "_blocked_proxy": 0.315,
+     "_workerStart": -1,
+     "_workerReady": -1,
+     "_workerFetchStart": -1,
+     "_workerRespondWithSettled": -1
+    },
+    "_connectionId": "23761"
+   },
+   {
+    "_initiator": {
+     "type": "preflight"
+    },
+    "_priority": "High",
+    "_resourceType": "preflight",
+    "cache": {},
+    "request": {
+     "method": "OPTIONS",
+     "url": "https://<<HOST_1>>/api/Prompt/GetHistory/2",
+     "httpVersion": "HTTP/1.1",
+     "headers": [
+      {
+       "name": "Accept",
+       "value": "*/*"
+      },
+      {
+       "name": "Accept-Encoding",
+       "value": "gzip, deflate, br, zstd"
+      },
+      {
+       "name": "Accept-Language",
+       "value": "en-US,en;q=0.9"
+      },
+      {
+       "name": "Access-Control-Request-Headers",
+       "value": "authorization"
+      },
+      {
+       "name": "Access-Control-Request-Method",
+       "value": "GET"
+      },
+      {
+       "name": "Connection",
+       "value": "keep-alive"
+      },
+      {
+       "name": "Host",
+       "value": "auditchat-api.cn.kworld.kpmg.com"
+      },
+      {
+       "name": "Origin",
+       "value": "https://auditchat.cn.kworld.kpmg.com"
+      },
+      {
+       "name": "Referer",
+       "value": "https://auditchat.cn.kworld.kpmg.com/"
+      },
+      {
+       "name": "Sec-Fetch-Dest",
+       "value": "empty"
+      },
+      {
+       "name": "Sec-Fetch-Mode",
+       "value": "cors"
+      },
+      {
+       "name": "Sec-Fetch-Site",
+       "value": "same-site"
+      },
+      {
+       "name": "User-Agent",
+       "value": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/<<IP_1>> Safari/537.36 Edg/<<IP_1>>"
+      }
+     ],
+     "queryString": [],
+     "cookies": [],
+     "headersSize": 583,
+     "bodySize": 0
+    },
+    "response": {
+     "status": 204,
+     "statusText": "No Content",
+     "httpVersion": "HTTP/1.1",
+     "headers": [
+      {
+       "name": "access-control-allow-credentials",
+       "value": "true"
+      },
+      {
+       "name": "access-control-allow-headers",
+       "value": "authorization"
+      },
+      {
+       "name": "access-control-allow-methods",
+       "value": "*"
+      },
+      {
+       "name": "access-control-allow-methods",
+       "value": "DELETE, GET, HEAD, OPTIONS, PATCH, POST, PUT"
+      },
+      {
+       "name": "access-control-allow-origin",
+       "value": "https://auditchat.cn.kworld.kpmg.com"
+      },
+      {
+       "name": "content-type",
+       "value": "application/json"
+      },
+      {
+       "name": "date",
+       "value": "Thu, 20 Aug 2026 02:50:28 GMT"
+      },
+      {
+       "name": "server",
+       "value": "waitress"
+      },
+      {
+       "name": "strict-transport-security",
+       "value": "max-age=31536000;includeSubDomains;preload"
+      },
+      {
+       "name": "vary",
+       "value": "Origin"
+      },
+      {
+       "name": "x-content-type-options",
+       "value": "nosniff"
+      }
+     ],
+     "cookies": [],
+     "content": {
+      "size": 0,
+      "mimeType": "application/json",
+      "compression": 613
+     },
+     "redirectURL": "",
+     "headersSize": 613,
+     "bodySize": -613,
+     "_transferSize": 0,
+     "_error": null,
+     "_fetchedViaServiceWorker": false
+    },
+    "startedDateTime": "2026-08-20T02:50:28.726Z",
+    "time": 10.602999991737306,
+    "timings": {
+     "blocked": 5.446,
+     "dns": -1,
+     "ssl": -1,
+     "connect": -1,
+     "send": 0.2320000000000002,
+     "wait": 4.455000021800399,
+     "receive": 0.4699999699369073,
+     "_blocked_queueing": -1,
+     "_blocked_proxy": 0.7859999999999999,
+     "_workerStart": -1,
+     "_workerReady": -1,
+     "_workerFetchStart": -1,
+     "_workerRespondWithSettled": -1
+    },
+    "_connectionId": "23761"
+   },
+   {
+    "_initiator": {
+     "type": "script"
+    },
+    "_priority": "VeryHigh",
+    "_resourceType": "document",
+    "cache": {},
+    "request": {
+     "method": "GET",
+     "url": "https://<<HOST_1>>/api/Citation/GetFile/<<HASH_1>>.pdf/1",
+     "httpVersion": "HTTP/1.1",
+     "headers": [
+      {
+       "name": "Accept",
+       "value": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7"
+      },
+      {
+       "name": "Accept-Encoding",
+       "value": "gzip, deflate, br, zstd"
+      },
+      {
+       "name": "Accept-Language",
+       "value": "en-US,en;q=0.9"
+      },
+      {
+       "name": "Connection",
+       "value": "keep-alive"
+      },
+      {
+       "name": "DNT",
+       "value": "1"
+      },
+      {
+       "name": "Host",
+       "value": "auditchat-api.cn.kworld.kpmg.com"
+      },
+      {
+       "name": "If-None-Match",
+       "value": "\"1787109656.7959604-174673-426381662\""
+      },
+      {
+       "name": "Referer",
+       "value": "https://auditchat.cn.kworld.kpmg.com/"
+      },
+      {
+       "name": "Sec-Fetch-Dest",
+       "value": "iframe"
+      },
+      {
+       "name": "Sec-Fetch-Mode",
+       "value": "navigate"
+      },
+      {
+       "name": "Sec-Fetch-Site",
+       "value": "same-site"
+      },
+      {
+       "name": "Sec-Fetch-User",
+       "value": "?1"
+      },
+      {
+       "name": "Upgrade-Insecure-Requests",
+       "value": "1"
+      },
+      {
+       "name": "User-Agent",
+       "value": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/<<IP_1>> Safari/537.36 Edg/<<IP_1>>"
+      },
+      {
+       "name": "sec-ch-ua",
+       "value": "\"Not=A?Brand\";v=\"99\", \"Microsoft Edge\";v=\"151\", \"Chromium\";v=\"151\""
+      },
+      {
+       "name": "sec-ch-ua-mobile",
+       "value": "?0"
+      },
+      {
+       "name": "sec-ch-ua-platform",
+       "value": "\"Windows\""
+      }
+     ],
+     "queryString": [],
+     "cookies": [],
+     "headersSize": 1753,
+     "bodySize": 0
+    },
+    "response": {
+     "status": 200,
+     "statusText": "OK",
+     "httpVersion": "HTTP/1.1",
+     "headers": [
+      {
+       "name": "access-control-allow-credentials",
+       "value": "true"
+      },
+      {
+       "name": "access-control-allow-methods",
+       "value": "*"
+      },
+      {
+       "name": "access-control-allow-origin",
+       "value": "*"
+      },
+      {
+       "name": "cache-control",
+       "value": "public, max-age=43200"
+      },
+      {
+       "name": "content-length",
+       "value": "174673"
+      },
+      {
+       "name": "content-type",
+       "value": "application/pdf"
+      },
+      {
+       "name": "date",
+       "value": "Thu, 20 Aug 2026 02:51:40 GMT"
+      },
+      {
+       "name": "etag",
+       "value": "\"1787194300.615726-174673-426381662\""
+      },
+      {
+       "name": "expires",
+       "value": "Thu, 20 Aug 2026 14:51:40 GMT"
+      },
+      {
+       "name": "last-modified",
+       "value": "Thu, 20 Aug 2026 02:51:40 GMT"
+      },
+      {
+       "name": "server",
+       "value": "waitress"
+      },
+      {
+       "name": "strict-transport-security",
+       "value": "max-age=31536000;includeSubDomains;preload"
+      },
+      {
+       "name": "vary",
+       "value": "Cookie"
+      },
+      {
+       "name": "x-content-type-options",
+       "value": "nosniff"
+      }
+     ],
+     "cookies": [],
+     "content": {
+      "size": 348,
+      "mimeType": "application/pdf",
+      "compression": 868,
+      "encoding": "base64",
+      "comment": "<<BINARY DROPPED mime=application/pdf size=348>>"
+     },
+     "redirectURL": "",
+     "headersSize": 520,
+     "bodySize": -520,
+     "_transferSize": 0,
+     "_error": null,
+     "_fetchedViaServiceWorker": false
+    },
+    "startedDateTime": "2026-08-20T02:51:40.581Z",
+    "time": 44.67500001192093,
+    "timings": {
+     "blocked": 4.171000010799617,
+     "dns": -1,
+     "ssl": -1,
+     "connect": -1,
+     "send": 0.375,
+     "wait": 36.88200001511723,
+     "receive": 3.2469999860040843,
+     "_blocked_queueing": 1.1710000107996166,
+     "_blocked_proxy": 0.31400000000000006,
+     "_workerStart": -1,
+     "_workerReady": -1,
+     "_workerFetchStart": -1,
+     "_workerRespondWithSettled": -1
+    },
+    "_connectionId": "23774"
+   },
+   {
+    "_initiator": {
+     "type": "script"
+    },
+    "_priority": "VeryHigh",
+    "_resourceType": "document",
+    "cache": {},
+    "request": {
+     "method": "GET",
+     "url": "https://<<HOST_1>>/api/Citation/GetFile/<<HASH_4>>.pdf/0",
+     "httpVersion": "HTTP/1.1",
+     "headers": [
+      {
+       "name": "Accept",
+       "value": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7"
+      },
+      {
+       "name": "Accept-Encoding",
+       "value": "gzip, deflate, br, zstd"
+      },
+      {
+       "name": "Accept-Language",
+       "value": "en-US,en;q=0.9"
+      },
+      {
+       "name": "Connection",
+       "value": "keep-alive"
+      },
+      {
+       "name": "DNT",
+       "value": "1"
+      },
+      {
+       "name": "Host",
+       "value": "auditchat-api.cn.kworld.kpmg.com"
+      },
+      {
+       "name": "If-None-Match",
+       "value": "\"1787188538.0524898-235736-458101069\""
+      },
+      {
+       "name": "Referer",
+       "value": "https://auditchat.cn.kworld.kpmg.com/"
+      },
+      {
+       "name": "Sec-Fetch-Dest",
+       "value": "iframe"
+      },
+      {
+       "name": "Sec-Fetch-Mode",
+       "value": "navigate"
+      },
+      {
+       "name": "Sec-Fetch-Site",
+       "value": "same-site"
+      },
+      {
+       "name": "Sec-Fetch-User",
+       "value": "?1"
+      },
+      {
+       "name": "Upgrade-Insecure-Requests",
+       "value": "1"
+      },
+      {
+       "name": "User-Agent",
+       "value": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/<<IP_1>> Safari/537.36 Edg/<<IP_1>>"
+      },
+      {
+       "name": "sec-ch-ua",
+       "value": "\"Not=A?Brand\";v=\"99\", \"Microsoft Edge\";v=\"151\", \"Chromium\";v=\"151\""
+      },
+      {
+       "name": "sec-ch-ua-mobile",
+       "value": "?0"
+      },
+      {
+       "name": "sec-ch-ua-platform",
+       "value": "\"Windows\""
+      }
+     ],
+     "queryString": [],
+     "cookies": [],
+     "headersSize": 1753,
+     "bodySize": 0
+    },
+    "response": {
+     "status": 200,
+     "statusText": "OK",
+     "httpVersion": "HTTP/1.1",
+     "headers": [
+      {
+       "name": "access-control-allow-credentials",
+       "value": "true"
+      },
+      {
+       "name": "access-control-allow-methods",
+       "value": "*"
+      },
+      {
+       "name": "access-control-allow-origin",
+       "value": "*"
+      },
+      {
+       "name": "cache-control",
+       "value": "public, max-age=43200"
+      },
+      {
+       "name": "content-length",
+       "value": "235736"
+      },
+      {
+       "name": "content-type",
+       "value": "application/pdf"
+      },
+      {
+       "name": "date",
+       "value": "Thu, 20 Aug 2026 02:51:54 GMT"
+      },
+      {
+       "name": "etag",
+       "value": "\"1787188538.0524898-235736-458101069\""
+      },
+      {
+       "name": "expires",
+       "value": "Thu, 20 Aug 2026 14:51:54 GMT"
+      },
+      {
+       "name": "last-modified",
+       "value": "Thu, 20 Aug 2026 01:15:38 GMT"
+      },
+      {
+       "name": "server",
+       "value": "waitress"
+      },
+      {
+       "name": "strict-transport-security",
+       "value": "max-age=31536000;includeSubDomains;preload"
+      },
+      {
+       "name": "vary",
+       "value": "Cookie"
+      },
+      {
+       "name": "x-content-type-options",
+       "value": "nosniff"
+      }
+     ],
+     "cookies": [],
+     "content": {
+      "size": 348,
+      "mimeType": "application/pdf",
+      "compression": 869,
+      "encoding": "base64",
+      "comment": "<<BINARY DROPPED mime=application/pdf size=348>>"
+     },
+     "redirectURL": "",
+     "headersSize": 521,
+     "bodySize": -521,
+     "_transferSize": 0,
+     "_error": null,
+     "_fetchedViaServiceWorker": false
+    },
+    "startedDateTime": "2026-08-20T02:51:54.902Z",
+    "time": 19.540000008419156,
+    "timings": {
+     "blocked": 10.896000039923937,
+     "dns": -1,
+     "ssl": -1,
+     "connect": -1,
+     "send": 0.38599999999999923,
+     "wait": 7.455999973475933,
+     "receive": 0.8019999950192869,
+     "_blocked_queueing": 1.3430000399239361,
+     "_blocked_proxy": 0.23000000000000043,
+     "_workerStart": -1,
+     "_workerReady": -1,
+     "_workerFetchStart": -1,
+     "_workerRespondWithSettled": -1
+    },
+    "_connectionId": "23774"
+   }
+  ]
+ }
+}
