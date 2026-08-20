@@ -12718,6 +12718,7 @@ const state = {
   role: null,         // 'host' | 'guest'
   incoming: null,     // active inbound file
   procChain: Promise.resolve(),
+  opened: false,
   bufResolve: null,
   sending: false,
 };
@@ -12730,6 +12731,7 @@ const LOW_WATER = 256 * 1024;
 let ws = null;
 let pendingCandidates = [];
 let remoteSet = false;
+let stallTimer = null;
 
 /* ---------- tiny DOM helpers ---------- */
 const $ = (id) => document.getElementById(id);
@@ -12874,6 +12876,10 @@ function wireChannel(ch) {
       log("Receive error: " + err.message, "warn");
     });
   };
+  // On the receiving side, ondatachannel can hand us a channel that is ALREADY
+  // open — in that case the onopen we just assigned will never fire, so the
+  // session UI would never appear. Check explicitly.
+  if (ch.readyState === "open") onConnected();
 }
 
 /* ---------- QR: render + scan ---------- */
@@ -13043,6 +13049,7 @@ async function quickConnect() {
   state.role = null;
   state.pc = null;
   state.key = null;
+  state.opened = false;
   state.salt = crypto.getRandomValues(new Uint8Array(16)); // used if we end up the initiator
   pendingCandidates = [];
   remoteSet = false;
@@ -13052,7 +13059,7 @@ async function quickConnect() {
   try { ws = new WebSocket(relay); }
   catch (e) { log("Could not open relay connection: " + e.message, "warn"); return; }
 
-  ws.onopen = () => { log("Relay connected. Waiting for the other device with this code…"); qsend({ t: "join", room }); };
+  ws.onopen = () => { log("Relay reached. Joining room " + room + "…"); qsend({ t: "join", room }); };
   ws.onerror = () => { log("Relay connection error. Check the address, and that relay.py is running and reachable.", "warn"); };
   ws.onclose = () => {};
 
@@ -13060,7 +13067,19 @@ async function quickConnect() {
     let m;
     try { m = JSON.parse(ev.data); } catch (_) { return; }
     if (m.t === "full") { log("That pairing code is already in use by two devices. Pick another.", "warn"); try { ws.close(); } catch (_) {} return; }
-    if (m.t === "joined") { await setupQuickPeer(m.peers >= 2, iceServers, pass); return; }
+    if (m.t === "joined") {
+      if (m.peers >= 2) log("Both devices are here — negotiating the direct link…");
+      else {
+        log("Waiting for the other device to join with code " + room + "…");
+        if (stallTimer) clearTimeout(stallTimer);
+        stallTimer = setTimeout(() => {
+          if (!state.opened) log("Still alone in room " + room + ". Check that BOTH devices typed this exact code and the same relay address.", "warn");
+        }, 15000);
+      }
+      await setupQuickPeer(m.peers >= 2, iceServers, pass);
+      return;
+    }
+    if (m.t === "peer-joined") { log("The other device joined — negotiating the direct link…"); return; }
     if (m.t === "peer-left") { log("The other device left the relay.", "warn"); return; }
     if (m.t === "signal") { await onQuickSignal(m.data, pass); return; }
   };
@@ -13074,7 +13093,14 @@ async function setupQuickPeer(initiator, iceServers, pass) {
   pc.oniceconnectionstatechange = () => {
     const s = pc.iceConnectionState;
     setStatus(s);
-    if (s === "failed") log("Couldn't find a route between the two devices. Across networks, a STUN (and sometimes TURN) server is needed.", "warn");
+    if (s === "connected" || s === "completed") {
+      if (!state.opened) {
+        if (stallTimer) clearTimeout(stallTimer);
+        stallTimer = setTimeout(() => {
+          if (!state.opened) log("Route found, but the data channel didn't open. Tap Connect again on both devices.", "warn");
+        }, 6000);
+      }
+    } else if (s === "failed") log("Couldn't find a route between the two devices. Across networks, a STUN (and sometimes TURN) server is needed.", "warn");
     else if (s === "disconnected") log("Connection dropped.", "warn");
   };
   pc.onicecandidate = (e) => { if (e.candidate) qsend({ t: "signal", data: { candidate: e.candidate } }); };
@@ -13117,6 +13143,9 @@ async function flushCandidates() {
 }
 
 function onConnected() {
+  if (state.opened) return;
+  state.opened = true;
+  if (stallTimer) { clearTimeout(stallTimer); stallTimer = null; }
   if (ws) { ws.onclose = null; ws.onerror = null; try { ws.close(); } catch (_) {} ws = null; }
   setStatus("connected");
   log("Encrypted channel open." + (state.key ? " Passphrase layer active." : " Transport encryption only."), "ok");
@@ -13124,6 +13153,7 @@ function onConnected() {
   show($("session"));
   $("encBadge").textContent = state.key ? "AES-256-GCM + DTLS" : "DTLS only";
   $("encBadge").className = "badge " + (state.key ? "badge-strong" : "badge-weak");
+  $("msgInput").focus();
 }
 
 /* ---------- messaging + files ---------- */
