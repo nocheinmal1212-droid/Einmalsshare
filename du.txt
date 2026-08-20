@@ -1,16 +1,17 @@
 <instruction>
-Retrieve the file by it's EXACT filename:
-<file_name>
-GSC_INTL_ASSSERVCS_12_5930
-</file_name>
-Retrieve recursively if nothing hits on first match. 
-Return the name of the first paragraph of that file.
-Check NOTHING beyond that.
-Cite this file and this file only, with EXACTLY one citation in your final output.
-</instruction>
+Retrieve the file with this EXACT name:
+<file_name>GSC_INTL_ASSSERVCS_12_5930</file_name>
 
-<meta>
-maxQueryAttemps = 3;
-maxSearchDepth = 4;
-A file is defined exclusively by name, the attachment to a file should be treated as an independent file and cited independently. e.g. GAAM_Alert_2025_31_Attachment_1 and GAAM_Alert_2025_31 are distinct files.
-</meta>
+A file is defined exclusively by its name. A file whose name merely contains
+this one is a DIFFERENT file — e.g. GSC_INTL_ASSSERVCS_12_5930_Attachment_1
+is not a match. Do not return or cite it.
+
+If the first search misses, retry recursively: max 3 queries, max depth 4.
+
+Then quote the first line of the matched file. Read nothing further.
+Check NOTHING beyond that.
+
+Output exactly one line:
+FOUND: <first line>   — with exactly one citation, to this file only.
+NOT FOUND: GSC_INTL_ASSSERVCS_12_5930   — with no citation.
+</instruction>
