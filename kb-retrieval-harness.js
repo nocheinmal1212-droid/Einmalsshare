@@ -8,7 +8,7 @@
    * It intentionally uses only browser APIs and stores no Bearer-token value.
    */
 
-  const VERSION = "1.0.1";
+  const VERSION = "1.1.0";
 
   // ---------------------------------------------------------------------------
   // OPERATOR EDIT AREA
@@ -27,6 +27,7 @@ PASTE_ONE_EXACT_FILENAME_PER_LINE_HERE.pdf
     maxQueryAttempts: 3, // initial batch, one rebatch, then a singleton attempt
     maxTransportAttempts: 3,
     maxDownloadAttempts: 3,
+    resultTimeoutMs: 5 * 60 * 1000,
     minInterBatchDelayMs: 1500,
     maxInterBatchDelayMs: 3000,
     statePrefix: "kb_retrieval_state_v3:",
@@ -181,7 +182,7 @@ They are distinct files, despite the former being the latter's parent.
     if (typeof rawName !== "string" || rawName.length === 0) {
       throw new SchemaError("Citation file_name must be a non-empty string.", "BAD_CITATION_FILENAME", { rawName });
     }
-    const slash = Math.max(rawName.lastIndexOf("/"), rawName.lastIndexOf("\\"));
+    const slash = rawName.lastIndexOf("/");
     const identity = slash >= 0 ? rawName.slice(slash + 1) : rawName;
     if (!identity) {
       throw new SchemaError("Citation file_name ends with a path separator.", "BAD_CITATION_FILENAME", { rawName });
@@ -374,6 +375,7 @@ They are distinct files, despite the former being the latter's parent.
       prompt_origin: new URL(requestTemplate.promptUrl).origin,
       prompt_path: new URL(requestTemplate.promptUrl).pathname,
       session_path: new URL(requestTemplate.sessionUrl).pathname,
+      result_path_template: "/api/PrompResponse/{prompt_resp_id}",
       model_ids: JSON.stringify(requestTemplate.payload?.list_model_id || []),
       has_data_source_id: Boolean(requestTemplate.payload?.model_params?.data_source_id),
       has_persona_id: Boolean(requestTemplate.payload?.model_params?.prompt_persona_id),
@@ -420,7 +422,7 @@ They are distinct files, despite the former being the latter's parent.
 
     if (!state) {
       state = {
-        version: 3,
+        version: 4,
         harnessVersion: VERSION,
         createdAt: now(),
         updatedAt: now(),
@@ -432,10 +434,12 @@ They are distinct files, despite the former being the latter's parent.
           stickyInterBatchDelayMs: SETTINGS.minInterBatchDelayMs,
           queryCount: 0,
           sessionCount: 0,
+          resultGetCount: 0,
           downloadCount: 0,
           hashCollisions: [],
         },
         batches: [],
+        pendingResults: [],
         rows: parsed.files.map((fileName, index) => ({
           index,
           fileName,
@@ -449,18 +453,70 @@ They are distinct files, despite the former being the latter's parent.
       };
       persistState();
     } else {
+      migrateState();
       recoverInterruptedState();
     }
     root.localStorage.setItem(SETTINGS.currentStatePointerKey, stateKey);
     return state;
   }
 
+  function migrateState() {
+    let changed = false;
+    if (!Array.isArray(state.pendingResults)) {
+      state.pendingResults = [];
+      changed = true;
+    }
+    if (!state.meta || typeof state.meta !== "object") {
+      state.meta = {};
+      changed = true;
+    }
+    for (const key of ["queryCount", "sessionCount", "resultGetCount", "downloadCount"]) {
+      if (!Number.isFinite(state.meta[key])) {
+        state.meta[key] = 0;
+        changed = true;
+      }
+    }
+    if (!Number.isFinite(state.meta.stickyInterBatchDelayMs)) {
+      state.meta.stickyInterBatchDelayMs = SETTINGS.minInterBatchDelayMs;
+      changed = true;
+    }
+    if (!Array.isArray(state.meta.hashCollisions)) {
+      state.meta.hashCollisions = [];
+      changed = true;
+    }
+    if (state.version !== 4 || state.harnessVersion !== VERSION) {
+      state.version = 4;
+      state.harnessVersion = VERSION;
+      changed = true;
+    }
+    if (changed) persistState();
+  }
+
   function recoverInterruptedState() {
     let changed = false;
+    const pendingRowIndexes = new Set(
+      (state.pendingResults || []).flatMap((pending) =>
+        Array.isArray(pending.rowIndexes) ? pending.rowIndexes : [],
+      ),
+    );
     for (const row of state.rows) {
       if (row.status === "querying") {
+        row.status = pendingRowIndexes.has(row.index) ? "awaiting_result" : "pending";
+        row.errors.push({
+          at: now(),
+          code: "RECOVERED_QUERY",
+          message: pendingRowIndexes.has(row.index)
+            ? "Recovered an acknowledged prompt; its result GET will resume without resubmitting."
+            : "Recovered an interrupted prompt submission before an acknowledgement was saved.",
+        });
+        changed = true;
+      } else if (row.status === "awaiting_result" && !pendingRowIndexes.has(row.index)) {
         row.status = "pending";
-        row.errors.push({ at: now(), code: "RECOVERED_QUERY", message: "Recovered an interrupted query." });
+        row.errors.push({
+          at: now(),
+          code: "ORPHANED_RESULT",
+          message: "No saved prompt_resp_id was available; the file was returned to the query queue.",
+        });
         changed = true;
       } else if (row.status === "downloading") {
         row.status = "cited";
@@ -502,7 +558,12 @@ They are distinct files, despite the former being the latter's parent.
     };
   }
 
-  async function fetchBearerWithPolicy(url, init, operation, { retryTransient = true } = {}) {
+  async function fetchBearerWithPolicy(
+    url,
+    init,
+    operation,
+    { retryTransient = true, timeoutMs = null } = {},
+  ) {
     let authRetries = 0;
     let rateRetries = 0;
     let transientRetries = 0;
@@ -510,24 +571,40 @@ They are distinct files, despite the former being the latter's parent.
 
     while (true) {
       let response;
+      let timeoutId = null;
+      const controller = timeoutMs ? new AbortController() : null;
       try {
+        if (controller) timeoutId = setTimeout(() => controller.abort(), timeoutMs);
         response = await nativeFetch(url, {
           ...init,
           headers: bearerHeaders(init.headers),
           credentials: "include",
           mode: "cors",
-          cache: "no-store",
+          signal: controller?.signal,
         });
       } catch (error) {
+        const timedOut = Boolean(controller?.signal.aborted);
         if (!retryTransient) {
-          throw new TransportError(`${operation} failed at the network layer: ${error.message}`, "NETWORK_FAILED");
+          throw new TransportError(
+            timedOut
+              ? `${operation} exceeded the ${Math.round(timeoutMs / 1000)}-second timeout.`
+              : `${operation} failed at the network layer: ${error.message}`,
+            timedOut ? "REQUEST_TIMEOUT" : "NETWORK_FAILED",
+          );
         }
         if (transientRetries >= 2) {
-          throw new TransportError(`${operation} failed after network retries: ${error.message}`, "NETWORK_FAILED");
+          throw new TransportError(
+            timedOut
+              ? `${operation} timed out after repeated attempts.`
+              : `${operation} failed after network retries: ${error.message}`,
+            timedOut ? "REQUEST_TIMEOUT" : "NETWORK_FAILED",
+          );
         }
         await sleep(2000 * 2 ** transientRetries);
         transientRetries += 1;
         continue;
+      } finally {
+        if (timeoutId !== null) clearTimeout(timeoutId);
       }
 
       if (response.status === 401) {
@@ -577,20 +654,25 @@ They are distinct files, despite the former being the latter's parent.
   }
 
   function parseSessionId(text) {
-    let parsed = text;
+    let parsed;
     try {
       parsed = JSON.parse(text);
-    } catch (_) {
-      // A literal raw ID string is also supported.
+    } catch (error) {
+      throw new SchemaError(`GetSessionId response was not JSON: ${error.message}`, "BAD_SESSION_RESPONSE");
     }
-    const id = typeof parsed === "string" ? parsed : parsed?.data;
-    if (typeof id !== "string" || id.length === 0) {
-      throw new SchemaError("GetSessionId did not return a raw string or an object with a non-empty data string.", "BAD_SESSION_RESPONSE");
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+      throw new SchemaError("GetSessionId response was not an envelope object.", "BAD_SESSION_RESPONSE");
     }
-    if (parsed && typeof parsed === "object" && parsed.success === false) {
-      throw new SchemaError(`GetSessionId reported failure: ${parsed.ret_msg || "unknown error"}`, "SESSION_REPORTED_FAILURE");
+    if (parsed.success !== true) {
+      throw new SchemaError(
+        `GetSessionId reported failure: ${safeDiagnosticText(parsed.ret_msg || "unknown error")}`,
+        "SESSION_REPORTED_FAILURE",
+      );
     }
-    return id;
+    if (typeof parsed.data !== "string" || parsed.data.length === 0) {
+      throw new SchemaError("GetSessionId data was not a non-empty string.", "BAD_SESSION_RESPONSE");
+    }
+    return parsed.data;
   }
 
   function safeDiagnosticText(value) {
@@ -630,6 +712,7 @@ They are distinct files, despite the former being the latter's parent.
       error: safeDiagnosticText(payload && typeof payload === "object" ? payload.error : null),
       dataType: valueType(data),
       dataKeys: objectKeys(data),
+      dataLength: Array.isArray(data) ? data.length : null,
       dataStringLength: typeof data === "string" ? data.length : null,
       dataStringParsesAsJson: parsedDataString !== null,
       parsedDataType: valueType(parsedDataString),
@@ -652,33 +735,119 @@ They are distinct files, despite the former being the latter's parent.
     return id;
   }
 
-  function parsePromptResponse(payload) {
-    if (!payload || typeof payload !== "object" || !payload.data || !Array.isArray(payload.data.list_page_info)) {
-      const diagnostic = summarizePromptEnvelope(payload);
-      console.error("[kb] Sanitized Prompt-envelope diagnostic:", diagnostic);
-      const reportedFailure = payload && typeof payload === "object" && payload.success === false;
-      throw new SchemaError(
-        reportedFailure
-          ? `Prompt reported application failure: ${safeDiagnosticText(payload.ret_msg || payload.message || payload.error || "no error message")}`
-          : "Prompt response lacks data.list_page_info[]. See the sanitized envelope diagnostic above.",
-        reportedFailure ? "PROMPT_REPORTED_FAILURE" : "PROMPT_SCHEMA_DRIFT",
-        diagnostic,
+  function parsePromptAck(payload) {
+    if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
+      throw new SchemaError("Prompt acknowledgement was not an envelope object.", "BAD_PROMPT_ACK");
+    }
+    const firstError = Array.isArray(payload.data) ? payload.data[0]?.error_message : null;
+    if (payload.success !== true) {
+      const messages = [payload.ret_msg, firstError]
+        .filter((message) => typeof message === "string" && message.length > 0)
+        .map((message) => safeDiagnosticText(message));
+      throw new FatalError(
+        `Prompt acknowledgement reported failure: ${messages.length ? messages.join(" | ") : "no error message"}`,
+        "PROMPT_ACK_REPORTED_FAILURE",
       );
     }
-    return payload.data.list_page_info.map((item, itemIndex) => {
-      if (!item || typeof item !== "object") {
-        throw new SchemaError(`Citation ${itemIndex} is not an object.`, "BAD_CITATION_ITEM");
+    if (!Array.isArray(payload.data) || payload.data.length === 0) {
+      throw new SchemaError("Prompt acknowledgement data was not a non-empty array.", "BAD_PROMPT_ACK");
+    }
+    const first = payload.data[0];
+    if (!first || typeof first !== "object" || Array.isArray(first)) {
+      throw new SchemaError("Prompt acknowledgement data[0] was not an object.", "BAD_PROMPT_ACK");
+    }
+    if (typeof first.error_message === "string" && first.error_message.length > 0) {
+      const details = [payload.ret_msg, first.error_message]
+        .filter((message) => typeof message === "string" && message.length > 0)
+        .map((message) => safeDiagnosticText(message))
+        .join(" | ");
+      throw new FatalError(
+        `Prompt acknowledgement reported an error: ${details}`,
+        "PROMPT_ACK_ERROR",
+      );
+    }
+    if (typeof first.prompt_resp_id !== "string" || first.prompt_resp_id.length === 0) {
+      throw new SchemaError("Prompt acknowledgement data[0].prompt_resp_id was missing.", "BAD_PROMPT_ACK");
+    }
+    return {
+      promptRespId: first.prompt_resp_id,
+      modelId: typeof first.model_id === "string" ? first.model_id : null,
+      description: typeof first.description === "string" ? first.description : null,
+    };
+  }
+
+  function parsePromptResult(payload) {
+    if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
+      throw new SchemaError("Prompt result was not an envelope object.", "BAD_PROMPT_RESULT");
+    }
+    if (payload.success !== true) {
+      throw new FatalError(
+        `Prompt result reported failure: ${safeDiagnosticText(payload.ret_msg || "no error message")}`,
+        "PROMPT_RESULT_REPORTED_FAILURE",
+      );
+    }
+    if (!payload.data || typeof payload.data !== "object" || Array.isArray(payload.data)) {
+      throw new SchemaError("Prompt result data was not an object.", "BAD_PROMPT_RESULT");
+    }
+    if (typeof payload.data.prompt_resp_id !== "string" || payload.data.prompt_resp_id.length === 0) {
+      throw new SchemaError("Prompt result prompt_resp_id was missing.", "BAD_PROMPT_RESULT");
+    }
+
+    const rawCitations = payload.data.list_page_info;
+    if (rawCitations !== undefined && rawCitations !== null && !Array.isArray(rawCitations)) {
+      throw new SchemaError("Prompt result list_page_info was present but was not an array.", "BAD_PROMPT_RESULT");
+    }
+    const citations = (rawCitations || []).map((item, itemIndex) => {
+      if (!item || typeof item !== "object" || Array.isArray(item)) {
+        throw new SchemaError(`Citation ${itemIndex} was not an object.`, "BAD_CITATION_ITEM");
       }
-      if (typeof item.file_name !== "string" || typeof item.s3_url !== "string") {
-        throw new SchemaError(`Citation ${itemIndex} lacks string file_name or s3_url.`, "BAD_CITATION_ITEM");
+      if (typeof item.index !== "string") {
+        throw new SchemaError(`Citation ${itemIndex} index was not a string.`, "BAD_CITATION_ITEM");
+      }
+      if (typeof item.file_name !== "string" || item.file_name.length === 0) {
+        throw new SchemaError(`Citation ${itemIndex} file_name was missing.`, "BAD_CITATION_ITEM");
+      }
+      if (
+        !Array.isArray(item.page_no) ||
+        item.page_no.some((page) => !Number.isInteger(page) || page < 1)
+      ) {
+        throw new SchemaError(`Citation ${itemIndex} page_no was not a list of positive integers.`, "BAD_CITATION_ITEM");
+      }
+      if (typeof item.s3_url !== "string") {
+        throw new SchemaError(`Citation ${itemIndex} s3_url was missing.`, "BAD_CITATION_ITEM");
+      }
+      try {
+        const parsedUrl = new URL(item.s3_url);
+        if (!["http:", "https:"].includes(parsedUrl.protocol)) throw new Error("unsupported protocol");
+      } catch (error) {
+        throw new SchemaError(`Citation ${itemIndex} s3_url was not an absolute HTTP(S) URL.`, "BAD_CITATION_ITEM");
       }
       return {
-        index: item.index ?? null,
+        index: item.index,
         file_name: item.file_name,
-        page_no: item.page_no ?? null,
+        page_no: [...item.page_no],
         s3_url: item.s3_url,
       };
     });
+
+    const followUps = payload.data.follow_up_prompt_resp_ids;
+    if (followUps !== undefined && followUps !== null && !Array.isArray(followUps)) {
+      throw new SchemaError("Prompt result follow_up_prompt_resp_ids was not an array.", "BAD_PROMPT_RESULT");
+    }
+    if ((followUps || []).some((id) => typeof id !== "string" || id.length === 0)) {
+      throw new SchemaError(
+        "Prompt result follow_up_prompt_resp_ids contained a non-string ID.",
+        "BAD_PROMPT_RESULT",
+      );
+    }
+    return {
+      promptRespId: payload.data.prompt_resp_id,
+      modelId: typeof payload.data.model_id === "string" ? payload.data.model_id : null,
+      createdTime:
+        typeof payload.data.created_time === "string" ? payload.data.created_time : null,
+      citations,
+      followUpPromptRespIds: [...(followUps || [])],
+    };
   }
 
   function extractDocumentHash(url) {
@@ -707,7 +876,15 @@ They are distinct files, despite the former being the latter's parent.
     return { matching, groups };
   }
 
-  async function postBatchOnce(fileNames) {
+  async function readJsonResponse(response, operation) {
+    try {
+      return await response.json();
+    } catch (error) {
+      throw new SchemaError(`${operation} response was not JSON: ${error.message}`, "RESPONSE_NOT_JSON");
+    }
+  }
+
+  async function submitBatchOnce(fileNames) {
     const sessionId = await createSession();
     const payload = deepClone(requestTemplate.payload);
     payload.content = buildPrompt(fileNames);
@@ -731,23 +908,17 @@ They are distinct files, despite the former being the latter's parent.
       throw new TransportError(`Prompt returned HTTP ${response.status}.`, "PROMPT_TRANSPORT_ERROR");
     }
 
-    let json;
-    try {
-      json = await response.json();
-    } catch (error) {
-      throw new SchemaError(`Prompt response was not JSON: ${error.message}`, "PROMPT_NOT_JSON");
-    }
-    const citations = parsePromptResponse(json);
+    const acknowledgement = parsePromptAck(await readJsonResponse(response, "Prompt acknowledgement"));
     state.meta.queryCount += 1;
     persistState();
-    return { sessionId, citations };
+    return { sessionId, ...acknowledgement };
   }
 
-  async function postBatchWithTransportRetries(fileNames) {
+  async function submitBatchWithTransportRetries(fileNames) {
     let lastError = null;
     for (let attempt = 1; attempt <= SETTINGS.maxTransportAttempts; attempt += 1) {
       try {
-        return await postBatchOnce(fileNames);
+        return await submitBatchOnce(fileNames);
       } catch (error) {
         if (error instanceof FatalError || error instanceof AuthHaltError || error instanceof RateLimitHaltError) throw error;
         lastError = error;
@@ -760,6 +931,109 @@ They are distinct files, despite the former being the latter's parent.
     throw new TransportError(
       `Batch transport failed after ${SETTINGS.maxTransportAttempts} fresh conversations: ${lastError?.message}`,
       "BATCH_TRANSPORT_FAILED",
+    );
+  }
+
+  function resultUrl(promptRespId) {
+    // The missing "t" in PrompResponse is a deployed server-side API typo.
+    // Preserve it literally.
+    return new URL(
+      `/api/PrompResponse/${encodeURIComponent(promptRespId)}`,
+      requestTemplate.promptUrl,
+    ).href;
+  }
+
+  function registerPendingResult(rows, acknowledgement) {
+    const pending = {
+      promptRespId: acknowledgement.promptRespId,
+      modelId: acknowledgement.modelId,
+      description: acknowledgement.description,
+      sessionId: acknowledgement.sessionId,
+      rowIndexes: rows.map((row) => row.index),
+      files: rows.map((row) => row.fileName),
+      status: "awaiting_result",
+      submittedAt: now(),
+      resultGetAttempts: 0,
+      lastResultGetAt: null,
+      lastError: null,
+    };
+    if (state.pendingResults.some((item) => item.promptRespId === pending.promptRespId)) {
+      throw new SchemaError(
+        `Duplicate pending prompt_resp_id ${pending.promptRespId}.`,
+        "DUPLICATE_PROMPT_RESPONSE_ID",
+      );
+    }
+    state.pendingResults.push(pending);
+    rows.forEach((row) => {
+      row.status = "awaiting_result";
+      row.pendingPromptRespId = pending.promptRespId;
+      row.updatedAt = now();
+    });
+    // Persist the response ID before starting the long-held GET. A reload can
+    // now resume the GET without ever resubmitting the prompt.
+    persistState();
+    return pending;
+  }
+
+  async function getPromptResultOnce(pending) {
+    pending.resultGetAttempts += 1;
+    pending.lastResultGetAt = now();
+    pending.lastError = null;
+    state.meta.resultGetCount += 1;
+    persistState();
+
+    const response = await fetchBearerWithPolicy(
+      resultUrl(pending.promptRespId),
+      { method: "GET", headers: { accept: "application/json" } },
+      `PrompResponse ${pending.promptRespId}`,
+      { retryTransient: false, timeoutMs: SETTINGS.resultTimeoutMs },
+    );
+    if (!response.ok) {
+      if (response.status >= 500) {
+        throw new TransportError(
+          `PrompResponse ${pending.promptRespId} returned HTTP ${response.status}.`,
+          "RESULT_SERVER_ERROR",
+        );
+      }
+      throw new FatalError(
+        `PrompResponse ${pending.promptRespId} returned HTTP ${response.status}.`,
+        "RESULT_HTTP_ERROR",
+      );
+    }
+
+    const result = parsePromptResult(await readJsonResponse(response, "Prompt result"));
+    if (result.promptRespId && result.promptRespId !== pending.promptRespId) {
+      throw new SchemaError(
+        `Prompt result ID ${result.promptRespId} did not match ${pending.promptRespId}.`,
+        "RESULT_ID_MISMATCH",
+      );
+    }
+    return result;
+  }
+
+  async function awaitPromptResult(pending) {
+    let lastError = null;
+    for (let attempt = 1; attempt <= SETTINGS.maxTransportAttempts; attempt += 1) {
+      try {
+        return await getPromptResultOnce(pending);
+      } catch (error) {
+        pending.lastError = error.message;
+        persistState();
+        if (error instanceof FatalError) throw error;
+        lastError = error;
+        if (attempt < SETTINGS.maxTransportAttempts) {
+          console.warn(
+            `[kb] Result GET attempt ${attempt} failed; reissuing the GET for ${pending.promptRespId} without resubmitting the prompt.`,
+            error,
+          );
+          await sleep(3000 * attempt);
+        }
+      }
+    }
+    throw new TransportError(
+      `Result GET for ${pending.promptRespId} failed after ${SETTINGS.maxTransportAttempts} attempts; resume will re-GET the same ID: ${lastError?.message}`,
+      "RESULT_GET_FAILED",
+      { promptRespId: pending.promptRespId },
     );
   }
 
@@ -904,7 +1178,6 @@ They are distinct files, despite the former being the latter's parent.
         method: "GET",
         credentials: "include",
         mode: "cors",
-        cache: "no-store",
       });
       if (response.status === 403) {
         document.status = "unavailable";
@@ -986,48 +1259,55 @@ They are distinct files, despite the former being the latter's parent.
     });
   }
 
-  async function processSemanticBatch(rows) {
-    const fileNames = rows.map((row) => row.fileName);
-    rows.forEach((row) => {
-      row.status = "querying";
-      row.updatedAt = now();
-    });
-    persistState();
+  function rowsForPendingResult(pending) {
+    const rows = pending.rowIndexes.map((index) => state.rows.find((row) => row.index === index));
+    if (rows.some((row) => !row)) {
+      throw new SchemaError(
+        `Saved result ${pending.promptRespId} refers to a missing row index.`,
+        "PENDING_RESULT_ROW_MISSING",
+      );
+    }
+    return rows;
+  }
 
-    let result;
-    try {
-      result = await postBatchWithTransportRetries(fileNames);
-    } catch (error) {
-      rows.forEach((row) => {
-        row.status = "pending";
-        addRowError(row, error, "BATCH_REQUEST_FAILED");
-      });
+  async function applyPromptResult(pending, result) {
+    const rows = rowsForPendingResult(pending);
+    if (state.batches.some((batch) => batch.promptRespId === pending.promptRespId)) {
+      state.pendingResults = state.pendingResults.filter(
+        (item) => item.promptRespId !== pending.promptRespId,
+      );
+      rows.forEach((row) => delete row.pendingPromptRespId);
       persistState();
-      if (error instanceof FatalError) throw error;
-
-      // A fully exhausted transport cycle consumes one bounded query attempt.
-      rows.forEach((row) => {
-        row.queryAttempts += 1;
-        row.status = row.queryAttempts >= SETTINGS.maxQueryAttempts ? "failed" : "pending";
-      });
-      persistState();
+      console.warn(`[kb] Result ${pending.promptRespId} was already applied; duplicate application was skipped.`);
       return;
     }
+    if (result.followUpPromptRespIds.length > 0) {
+      console.warn(
+        `[kb] Prompt ${pending.promptRespId} returned follow-up response IDs; they were logged but not fetched:`,
+        result.followUpPromptRespIds,
+      );
+    }
 
-    const batchAudit = {
+    state.batches.push({
       at: now(),
-      files: fileNames,
+      submittedAt: pending.submittedAt,
+      promptRespId: pending.promptRespId,
+      resultGetAttempts: pending.resultGetAttempts,
+      modelId: result.modelId || pending.modelId,
+      createdTime: result.createdTime,
+      files: pending.files,
       citationCount: result.citations.length,
       returnedFileNames: result.citations.map((citation) => citation.file_name),
+      followUpPromptRespIds: result.followUpPromptRespIds,
       citations: result.citations.map((citation) => ({
         ...citation,
         document_hash: extractDocumentHash(citation.s3_url),
       })),
-    };
-    state.batches.push(batchAudit);
+    });
 
     for (const row of rows) {
       row.queryAttempts += 1;
+      delete row.pendingPromptRespId;
       const { matching, groups } = groupMatchingCitations(row, result.citations);
       row.citations.push(
         ...matching.map((citation) => ({
@@ -1041,7 +1321,10 @@ They are distinct files, despite the former being the latter's parent.
         row.status = row.queryAttempts >= SETTINGS.maxQueryAttempts ? "failed" : "pending";
         addRowError(
           row,
-          new KbError("No citation file_name exactly equalled the expected filename after path-prefix removal.", "NO_EXACT_MATCH"),
+          new KbError(
+            "No citation file_name exactly equalled the expected filename after removing the confirmed agent prefix through the last '/'.",
+            "NO_EXACT_MATCH",
+          ),
         );
       } else {
         row.documents = makeDocuments(row, groups);
@@ -1049,12 +1332,68 @@ They are distinct files, despite the former being the latter's parent.
       }
       row.updatedAt = now();
     }
+
+    state.pendingResults = state.pendingResults.filter(
+      (item) => item.promptRespId !== pending.promptRespId,
+    );
     persistState();
 
     for (const row of rows) {
       if (stopRequested) break;
       if (row.status === "cited") await downloadPendingForRow(row);
     }
+  }
+
+  async function resumePendingResult(pending) {
+    const rows = rowsForPendingResult(pending);
+    rows.forEach((row) => {
+      row.status = "awaiting_result";
+      row.pendingPromptRespId = pending.promptRespId;
+      row.updatedAt = now();
+    });
+    persistState();
+
+    try {
+      const result = await awaitPromptResult(pending);
+      await applyPromptResult(pending, result);
+    } catch (error) {
+      rows.forEach((row) => addRowError(row, error, "RESULT_GET_FAILED"));
+      persistState();
+      throw error;
+    }
+  }
+
+  async function processSemanticBatch(rows) {
+    const fileNames = rows.map((row) => row.fileName);
+    rows.forEach((row) => {
+      row.status = "querying";
+      row.updatedAt = now();
+    });
+    persistState();
+
+    let acknowledgement;
+    try {
+      acknowledgement = await submitBatchWithTransportRetries(fileNames);
+    } catch (error) {
+      rows.forEach((row) => {
+        row.status = "pending";
+        addRowError(row, error, "BATCH_SUBMIT_FAILED");
+      });
+      persistState();
+      if (error instanceof FatalError) throw error;
+
+      // Only a submission failure with no saved prompt_resp_id consumes this
+      // bounded semantic attempt. Result-GET failures never do.
+      rows.forEach((row) => {
+        row.queryAttempts += 1;
+        row.status = row.queryAttempts >= SETTINGS.maxQueryAttempts ? "failed" : "pending";
+      });
+      persistState();
+      return;
+    }
+
+    const pending = registerPendingResult(rows, acknowledgement);
+    await resumePendingResult(pending);
   }
 
   function nextBatch(eligibleRows) {
@@ -1091,6 +1430,16 @@ They are distinct files, despite the former being the latter's parent.
     const rowIsInScope = (row) => row.index < scopeRowCount;
 
     try {
+      // An acknowledged prompt is resumed by reissuing only its idempotent,
+      // long-held result GET. Never create a new session or resubmit its POST.
+      for (const pending of [...state.pendingResults].filter((item) =>
+        item.rowIndexes.some((index) => index < scopeRowCount),
+      )) {
+        if (stopRequested) break;
+        console.info(`[kb] Awaiting saved result ${pending.promptRespId} for:`, pending.files);
+        await resumePendingResult(pending);
+      }
+
       // Resume already-cited downloads before asking the model again.
       for (const row of state.rows.filter(
         (item) => rowIsInScope(item) && ["cited", "downloading"].includes(item.status),
@@ -1211,6 +1560,7 @@ They are distinct files, despite the former being the latter's parent.
         index: row.index,
         fileName: row.fileName,
         status: row.status,
+        promptRespId: row.pendingPromptRespId || "",
         queryAttempts: row.queryAttempts,
         citationCount: row.citations.length,
         documentCount: row.documents.length,
@@ -1284,14 +1634,17 @@ They are distinct files, despite the former being the latter's parent.
     export: exportState,
     resetCurrentState,
     _test: Object.freeze({
+      resultTimeoutMs: SETTINGS.resultTimeoutMs,
       parseFileNames,
       returnedFileIdentity,
       isExactFileMatch,
       buildPrompt,
       parseSessionId,
-      parsePromptResponse,
+      parsePromptAck,
+      parsePromptResult,
       summarizePromptEnvelope,
       extractDocumentHash,
+      resultUrl,
       sanitizeCapturedRequest,
       fnv1a,
     }),
