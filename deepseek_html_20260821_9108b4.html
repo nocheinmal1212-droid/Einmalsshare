@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>KB Retrieval Harness — Documentation</title>
+    <style>
+        /* ── reset & base ── */
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        :root {
+            --bg: #f8f9fc;
+            --surface: #ffffff;
+            --text: #1e293b;
+            --text-secondary: #475569;
+            --border: #e2e8f0;
+            --accent: #2563eb;
+            --accent-light: #dbeafe;
+            --code-bg: #f1f5f9;
+            --code-border: #e2e8f0;
+            --warning-bg: #fef9c3;
+            --warning-border: #facc15;
+            --success: #16a34a;
+            --radius: 10px;
+            --shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+            --font: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            --mono: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', 'Consolas', monospace;
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: var(--font);
+            line-height: 1.7;
+            padding: 2rem 1rem;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: var(--surface);
+            padding: 2.5rem 3rem;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+        }
+
+        @media (max-width: 700px) {
+            .container {
+                padding: 1.5rem 1.25rem;
+            }
+            body {
+                padding: 1rem 0.5rem;
+            }
+        }
+
+        /* ── typography ── */
+        h1 {
+            font-size: 2.2rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            margin-bottom: 0.25rem;
+            color: #0f172a;
+        }
+
+        .subtitle {
+            font-size: 1.1rem;
+            color: var(--text-secondary);
+            margin-bottom: 2rem;
+            border-bottom: 2px solid var(--border);
+            padding-bottom: 1rem;
+        }
+
+        h2 {
+            font-size: 1.6rem;
+            font-weight: 600;
+            margin-top: 2.4rem;
+            margin-bottom: 1rem;
+            padding-top: 0.5rem;
+            border-top: 2px solid var(--border);
+            color: #0f172a;
+        }
+
+        h2:first-of-type {
+            border-top: none;
+            margin-top: 1.5rem;
+        }
+
+        h3 {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-top: 1.8rem;
+            margin-bottom: 0.6rem;
+            color: #1e293b;
+        }
+
+        h4 {
+            font-size: 1.05rem;
+            font-weight: 600;
+            margin-top: 1.4rem;
+            margin-bottom: 0.4rem;
+            color: #1e293b;
+        }
+
+        p {
+            margin-bottom: 1rem;
+        }
+
+        a {
+            color: var(--accent);
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+
+        /* ── lists ── */
+        ul,
+        ol {
+            margin: 0.5rem 0 1.2rem 1.5rem;
+        }
+        li {
+            margin-bottom: 0.35rem;
+        }
+
+        /* ── code blocks ── */
+        pre {
+            background: var(--code-bg);
+            border: 1px solid var(--code-border);
+            border-radius: 8px;
+            padding: 1rem 1.25rem;
+            overflow-x: auto;
+            font-family: var(--mono);
+            font-size: 0.9rem;
+            line-height: 1.6;
+            margin: 1rem 0 1.5rem 0;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        code {
+            font-family: var(--mono);
+            font-size: 0.9em;
+            background: var(--code-bg);
+            padding: 0.15rem 0.4rem;
+            border-radius: 4px;
+            border: 1px solid transparent;
+        }
+
+        pre code {
+            background: transparent;
+            padding: 0;
+            border: none;
+            font-size: 0.9rem;
+        }
+
+        /* inline code in headings gets a lighter touch */
+        h2 code,
+        h3 code,
+        h4 code {
+            font-size: 0.9em;
+        }
+
+        /* ── callout / important ── */
+        .callout {
+            background: var(--warning-bg);
+            border-left: 5px solid var(--warning-border);
+            padding: 0.8rem 1.2rem;
+            border-radius: 6px;
+            margin: 1.2rem 0;
+        }
+
+        .callout strong {
+            color: #854d0e;
+        }
+
+        .callout.warning {
+            background: #fef2f2;
+            border-left-color: #ef4444;
+        }
+        .callout.warning strong {
+            color: #991b1b;
+        }
+
+        .callout.info {
+            background: var(--accent-light);
+            border-left-color: var(--accent);
+        }
+        .callout.info strong {
+            color: #1e40af;
+        }
+
+        /* ── tables for statuses ── */
+        .status-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.3rem 1.5rem;
+            background: var(--code-bg);
+            padding: 0.75rem 1.25rem;
+            border-radius: 8px;
+            margin: 0.75rem 0 1.25rem 0;
+            font-size: 0.95rem;
+        }
+        .status-grid .key {
+            font-weight: 600;
+            color: #0f172a;
+        }
+        .status-grid .val {
+            color: var(--text-secondary);
+        }
+
+        @media (max-width: 500px) {
+            .status-grid {
+                grid-template-columns: 1fr;
+                gap: 0.1rem;
+            }
+            .status-grid .key {
+                margin-top: 0.3rem;
+            }
+        }
+
+        /* ── command blocks (inline commands) ── */
+        .cmd {
+            background: #0f172a;
+            color: #e2e8f0;
+            font-family: var(--mono);
+            font-size: 0.9rem;
+            padding: 0.3rem 0.7rem;
+            border-radius: 5px;
+            display: inline-block;
+            margin: 0.1rem 0;
+        }
+
+        .cmd-block {
+            background: #0f172a;
+            color: #e2e8f0;
+            font-family: var(--mono);
+            font-size: 0.9rem;
+            padding: 0.6rem 1rem;
+            border-radius: 6px;
+            margin: 0.5rem 0 1rem 0;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        /* ── hr ── */
+        hr {
+            border: none;
+            border-top: 2px solid var(--border);
+            margin: 2rem 0;
+        }
+
+        /* ── tl;dr badge ── */
+        .tldr {
+            display: inline-block;
+            background: #0f172a;
+            color: #f8fafc;
+            font-weight: 700;
+            font-size: 0.8rem;
+            letter-spacing: 0.04em;
+            padding: 0.2rem 0.8rem;
+            border-radius: 20px;
+            text-transform: uppercase;
+            margin-bottom: 0.5rem;
+        }
+
+        /* ── step numbers ── */
+        .step {
+            font-weight: 600;
+            color: var(--accent);
+        }
+
+        /* ── responsive tweaks ── */
+        @media (max-width: 600px) {
+            h1 {
+                font-size: 1.7rem;
+            }
+            h2 {
+                font-size: 1.3rem;
+            }
+            h3 {
+                font-size: 1.05rem;
+            }
+            pre {
+                font-size: 0.8rem;
+                padding: 0.75rem 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+
+        <!-- header -->
+        <h1>KB Retrieval Harness</h1>
+        <div class="subtitle">Browser‑console tool for cited KB‑PDF retrieval &bull; Edge DevTools snippet</div>
+
+        <!-- TLDR -->
+        <div class="tldr">TL;DR</div>
+
+        <div class="callout">
+            <strong>Important</strong>
+            <ul style="margin-top:0.4rem; margin-bottom:0;">
+                <li>If you're just using the tool casually, you don't need to read past the <em>“Pilot, then run”</em> block.</li>
+                <li><strong>English is authoritative</strong> — Chinese is machine‑translated.</li>
+                <li>If you're not familiar with DevTools, ask an AI for detailed steps.</li>
+                <li>The walkthrough below is written in plain Chinese for quick onboarding.</li>
+            </ul>
+        </div>
+
+        <!-- ========== 白话流程 ========== -->
+        <h2>白话流程</h2>
+        <p>Step‑by‑step (Chinese, conversational):</p>
+
+        <ol>
+            <li>打开浏览器，右键点 <strong>Inspect</strong> 打开 DevTools。</li>
+            <li>找到 <strong>Network</strong> 标签，点左上角的清空按钮清空 log（建议打开 <strong>Preserve logs</strong>）。</li>
+            <li>找到 <strong>Sources</strong> → 在 Sources 里找到 <strong>Snippets</strong>，创建新的 Snippet。</li>
+            <li>把 harness 的代码复制粘贴进去。</li>
+            <li>
+                把 harness 代码最上面 <code>const FILE_NAMES_TEXT = String.raw`...`;</code> 的部分替换成你的文件名，每行一个：
+                <pre>const FILE_NAMES_TEXT = String.raw`
+        UN_GAAM_ALERT_2025_31.pdf
+        GAAM_Alert_2025_31_Attachment_1.pdf
+        `;</pre>
+            </li>
+            <li>点击 Snippet 面板下方的 <strong>小三角</strong> 开始运行。</li>
+            <li>切换到 <strong>Console</strong> 标签。</li>
+            <li>如果无法粘贴，第一次可能需要输入 <code>allow paste</code>（具体看 console 提示）。</li>
+            <li>
+                输入 <code class="cmd">kb.armCopyAsFetch()</code> 并按回车。提示：输入 <code>kb.arm</code> 后按 Tab 会自动补全；需要手打括号。
+            </li>
+            <li>
+                <strong>记忆功能：</strong> 如果想全新重跑，使用 <code class="cmd">kb.resetCurrentState("RESET")</code>。
+            </li>
+            <li>回到 <strong>Network</strong> 标签。</li>
+            <li>
+                <p>此步骤可随时执行，但确保剪贴板里有内容：向 AI agent 发送一个随便的 prompt（例如 <code>hello world</code>）。在 Network 里找到 <code>prompt/</code> 请求（状态码是 <strong>200</strong>，不是 204）。可以查看 Payload 里的 <code>content</code> 确认是你发的信息。右键这个 <code>prompt/</code> 请求，选择 <strong>Copy → Copy as fetch</strong>。</p>
+            </li>
+            <li>粘贴。现在 harness 已经拿到了你的 agent spec，初始化完成。</li>
+            <li>输入 <code class="cmd">await kb.pickFolder()</code>，浏览器会弹出文件夹选择器，选中你的输出目录（首次可能需要允许访问权限）。</li>
+            <li>输入 <code class="cmd">await kb.pilot(20)</code>（数字随便，多大都行，建议先跑 20 个试水）。</li>
+            <li>如果没有报错就开始运行。如果有报错，仔细看错误信息；如果看不懂或遇到 edge case，按 <strong>TRUST_ME_BRO</strong> 原则全部重来一遍。</li>
+            <li>运行 <code class="cmd">await kb.run()</code> 跑完所有文件。</li>
+        </ol>
+
+        <div class="callout info">
+            <strong>常见问题</strong>
+            <ul style="margin-top:0.4rem; margin-bottom:0;">
+                <li><strong>a.</strong> 步骤执行有问题 —— 仔细对照上面的流程。</li>
+                <li><strong>b.</strong> 如果发现经常只返回一个 query，大概率是 agent 问错了（检查文件名是否精确）。</li>
+                <li><strong>c.</strong> 文件列表粘贴需要保证没有空行，一行一个。修改源代码后需要重新运行并重走流程。harness 对特定 list 有记忆，重跑前建议执行 <code>kb.resetCurrentState("RESET")</code>。</li>
+            </ul>
+        </div>
+
+        <hr />
+
+        <!-- ========== 正式 Manual ========== -->
+        <h2>正式 Manual (English authoritative)</h2>
+
+        <h3>Files</h3>
+        <ul>
+            <li><code>kb-retrieval-harness.js</code> — paste/run as an Edge DevTools Snippet.</li>
+            <li>This runbook — setup, pilot, recovery, and reconciliation instructions.</li>
+        </ul>
+
+        <h3>Prepare the script</h3>
+        <p>Open <code>kb-retrieval-harness.js</code> and find <code>FILE_NAMES_TEXT</code> near the top. Replace the placeholder with one bare filename per line:</p>
+        <pre>const FILE_NAMES_TEXT = String.raw`
+        UN_GAAM_ALERT_2025_31.pdf
+        GAAM_Alert_2025_31_Attachment_1.pdf
+        `;</pre>
+        <p>Paste names at column 1 without bullets, quotes, commas, agent prefixes, or surrounding whitespace. Exact duplicate lines are sent only once and listed in the audit. The script rejects path-like or whitespace-padded input.</p>
+        <p><strong>Matching</strong> is case‑sensitive exact equality after one operation: the confirmed agent prefix is removed through the <strong>last forward slash</strong> in the returned <code>file_name</code>. Nothing else is normalized — no lowercasing, trimming, backslash handling, substrings, or fuzzy matching.</p>
+
+        <h3>Capture the selected agent’s request template</h3>
+        <p>Do this once for each selected agent/configuration:</p>
+        <ol>
+            <li>On the corporate Windows device, open the authenticated application in Edge.</li>
+            <li>Select the agent and open a fresh conversation.</li>
+            <li>Send one throwaway query.</li>
+            <li>Open DevTools (<strong>F12</strong> or <strong>Ctrl+Shift+I</strong>). In Network, select its <code>POST /api/Prompt/</code> request and choose <strong>Copy as fetch</strong>.</li>
+            <li>In DevTools Sources, create a Snippet, paste the complete harness, save (<strong>Ctrl+S</strong>), and run (<strong>Ctrl+Enter</strong>).</li>
+            <li>In the Console, run: <code class="cmd">kb.armCopyAsFetchCapture()</code></li>
+            <li>Paste the unedited <strong>Copy as fetch</strong> command and press Enter.</li>
+        </ol>
+        <p>The harness intercepts the pasted command, extracts URL, headers, and payload, removes the Bearer value, and does <strong>not</strong> resend the throwaway request. Unrelated background fetches pass through normally.</p>
+
+        <p>Check the sanitized result:</p>
+        <pre><code>kb.captureSummary()</code></pre>
+
+        <p>If the token’s Local Storage key could not be selected uniquely:</p>
+        <pre><code>kb.tokenCandidates()       // key names only; never token values
+            kb.setTokenKey("exact-key-name")</code></pre>
+
+        <p>The sanitized request template is saved in Local Storage for recovery after a reload. Capturing a different agent/configuration produces a separate state namespace.</p>
+
+        <h3>Select the output</h3>
+        <p><strong>Preferred</strong> (verifies existing files and avoids overwriting different content):</p>
+        <pre><code>await kb.pickFolder()</code></pre>
+
+        <p>If managed policy blocks the directory picker, configure Edge to download without prompting into a dedicated empty folder, then use:</p>
+        <pre><code>kb.useBrowserDownloads()</code></pre>
+        <p>Browser‑download mode verifies the HTTP response and PDF bytes before clicking the download, but cannot verify the final disk write. Rows are reported as <code>download_triggered</code>, not <code>downloaded</code>.</p>
+
+        <h3>Pilot, then run</h3>
+        <p>Keep the application tab in the foreground. In Windows <strong>Settings → System → Power &amp; battery → Screen and sleep</strong>, prevent sleep while plugged in for the duration of the run, if corporate policy permits.</p>
+
+        <p>Run the first 20 input rows through their complete retry ladder:</p>
+        <pre><code>await kb.pilot(20)
+            kb.report()
+            kb.details()
+            kb.exportState()</code></pre>
+
+        <p>Inspect the downloaded files and audit before continuing. Then run the remainder:</p>
+        <pre><code>await kb.run()</code></pre>
+
+        <p>At the observed 2–4 minutes per model result, a clean 20‑file pilot (five four‑file batches) takes roughly 10–20 minutes. Unmatched‑file retries add time.</p>
+
+        <p>Each semantic attempt performs: token refresh → <code>GET /api/Tools/GetSessionId</code> → copy captured Prompt payload (replace <code>content</code> and <code>model_params.user_session_id</code>) → <code>POST /api/Prompt/</code> → parse acknowledgement and persist <code>prompt_resp_id</code> → blocking <code>GET /api/PrompResponse/{id}</code> (note the missing <strong>t</strong> — this is the deployed path) → parse <code>list_page_info</code> → download cited PDFs via cookies (no Bearer header).</p>
+
+        <p>Partial batches are safe: matched files are saved; only unmatched filenames requeue. The initial and second semantic attempts use batches of up to four; the third and final attempt is a singleton.</p>
+
+        <h3>Controls and recovery</h3>
+        <div class="cmd-block">kb.stop()                    // graceful stop after the current operation
+            await kb.resume()            // resume saved result GETs first, then downloads/queries
+            kb.requeueDownloadFailures() // after fixing folder/network issues; then resume
+            await kb.backfillUnmatchedCitations() // from v1.1.0 audit; no Prompt calls
+            kb.report()                  // counts by per-file status
+            kb.details("failed")        // optional status filter
+            kb.details("extra")          // unmatched download references
+            kb.exportState()             // complete JSON audit trail
+            kb.help()                    // command summary</div>
+
+        <p>State is rewritten in Local Storage after material transitions. After a page reload:</p>
+        <ol>
+            <li>Rerun the DevTools Snippet.</li>
+            <li>Reselect the output folder with <code>await kb.pickFolder()</code> (directory handles are intentionally not persisted), or re‑enable browser‑download mode.</li>
+            <li>Run <code>await kb.resume()</code>.</li>
+        </ol>
+
+        <p>If a Prompt acknowledgement had already been received, resume reissues <code>/api/PrompResponse/{saved-id}</code> before submitting anything new. <code>kb.stop()</code> is graceful and does not abort an active result GET, so it may take up to the current request’s five‑minute timeout to return.</p>
+
+        <p>A <code>401</code> is retried once after rereading Local Storage. A second <code>401</code> halts cleanly. A <code>429</code> honors <code>Retry-After</code> when present, otherwise backs off for 30, 60, 120, and 240 seconds while increasing the inter‑batch delay.</p>
+
+        <p>To remove only the current run’s saved state (downloaded files are not touched):</p>
+        <pre><code>kb.resetCurrentState("RESET")</code></pre>
+
+        <p>Resume and reload recovery belong to the same run and may reuse its saved citation URLs. To deliberately start a new independent run with the same agent and filename list, export the old audit and reset its state first.</p>
+
+        <h3>Audit interpretation</h3>
+        <div class="status-grid">
+            <span class="key">downloaded</span><span class="val">PDF response verified and disk write completed.</span>
+            <span class="key">download_triggered</span><span class="val">PDF response verified; browser download triggered, disk write not inspected.</span>
+            <span class="key">pending</span><span class="val">Waiting for another semantic attempt.</span>
+            <span class="key">awaiting_result</span><span class="val">Prompt accepted; saved <code>prompt_resp_id</code> is waiting or ready to resume.</span>
+            <span class="key">failed</span><span class="val">No exact citation match after three semantic attempts.</span>
+            <span class="key">cited</span><span class="val">Exact citation found; download remains retryable.</span>
+            <span class="key">download_failed</span><span class="val">All configured download attempts exhausted.</span>
+            <span class="key">unavailable</span><span class="val">Immediate citation download returned <code>403</code>.</span>
+            <span class="key">ambiguous</span><span class="val">Exact filename resolved to more than one distinct document hash; candidates saved with suffix.</span>
+            <span class="key">extra</span><span class="val">Verified synthetic download for a citation hash that matched no expected line; filename prefixed with <code>unmatched__</code>.</span>
+        </div>
+
+        <p>Page‑level citations with the same document hash are downloaded once. Hashes are <strong>not</strong> used to merge different filenames — if a hash appears under two distinct exact names, both identities are preserved and the collision is flagged for review. This protects parent and attachment filenames from accidental conflation.</p>
+
+        <p>The exported JSON records every returned citation candidate, exact matches, page URLs, document hashes, download checks, errors, duplicate input lines, and cross‑filename hash collisions. Reconcile that export against the operator’s source list after each agent run.</p>
+
+        <p>Optional manual Windows digest comparison:</p>
+        <pre><code>certutil -hashfile "C:\path\to\file.pdf" SHA256</code></pre>
+
+        <hr />
+
+        <p style="font-size:0.9rem; color:var(--text-secondary); margin-top:1.5rem;">
+            <strong>Note:</strong> The Chinese section at the top is a conversational walkthrough for quick setup.
+            For all technical details, refer to the English manual above.
+        </p>
+
+    </div>
+
+</body>
+</html>
